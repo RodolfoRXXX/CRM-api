@@ -1,5 +1,8 @@
 const express = require('express');
 const router  = express.Router();
+const app = express();
+const keys = require('../settings/keys');
+app.set('keys', keys.key);
 
 const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
@@ -27,7 +30,7 @@ router.post('/register', async function(req, res, next){
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
-                        let token = jwt.sign({data: result}, 'secret')
+                        let token = jwt.sign({data: result}, app.get('key'))
                         res.send({status: 1, data: result, token: token});
                     }
                 })
@@ -48,7 +51,7 @@ router.post('/login', async function(req, res, next){
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
+                let token = jwt.sign({data: result}, app.get('key'))
                 res.send({status: 1, data: result, token: token});
             }
         })
