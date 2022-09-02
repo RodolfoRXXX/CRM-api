@@ -18,19 +18,19 @@ const con = mysql.createConnection({
 //Obtener el listado de usuarios(GET)
 router.post('/register', async function(req, res, next){
     try{
-        let {username, email, password} = req.body;
+        let {email, password, rol} = req.body;
 
         const hashed_password = md5(password.toString())
 
-        const checkUsername = `SELECT username FROM users WHERE username = ?`;
-        con.query(checkUsername, [username], (err, result, fields) => {
+        const checkEmail = `SELECT email FROM users WHERE email = ?`;
+        con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
-                const sql = `INSERT INTO users (username, email, password) VALUES (?, ?, ?)`;
-                con.query(sql, [username, email, hashed_password], (err, result, fields) => {
+                const sql = `INSERT INTO users (email, password, rol) VALUES (?, ?, ?)`;
+                con.query(sql, [email, hashed_password, rol], (err, result, fields) => {
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
-                        let token = jwt.sign({data: result}, app.get('key'))
+                        let token = jwt.sign({data: result}, 'secret')
                         res.send({status: 1, data: result, token: token});
                     }
                 })
@@ -43,15 +43,15 @@ router.post('/register', async function(req, res, next){
 
 router.post('/login', async function(req, res, next){
     try {
-        let {username, password} = req.body;
+        let {email, password} = req.body;
 
         const hashed_password = md5(password.toString())
-        const sql = `SELECT * FROM users WHERE username = ? AND password = ?`
-        con.query(sql, [username, hashed_password], (err, result, field) => {
+        const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
+        con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, app.get('key'))
+                let token = jwt.sign({data: result}, 'secret')
                 res.send({status: 1, data: result, token: token});
             }
         })
