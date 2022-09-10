@@ -18,25 +18,33 @@ const con = mysql.createConnection({
 //Obtener el listado de usuarios(GET)
 router.post('/register', async function(req, res, next){
     try{
-        let {email, password, rol} = req.body;
+        let {email, password, rol, codeEmail, active} = req.body;
 
         const hashed_password = md5(password.toString())
 
         const checkEmail = `SELECT email FROM users WHERE email = ?`;
         con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
-                const sql = `INSERT INTO users (email, password, rol) VALUES (?, ?, ?)`;
-                con.query(sql, [email, hashed_password, rol], (err, result, fields) => {
+                //exito en no encontrar usuario
+                const sql = `INSERT INTO users (email, password, rol, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
+                con.query(sql, [email, hashed_password, rol, codeEmail, active], (err, result, fields) => {
                     if (err) {
+                        //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
-                        let token = jwt.sign({data: result}, 'secret')
-                        res.send({status: 1, data: result, token: token});
+                        let user = [{email: email, password: hashed_password, rol: rol, id: result.insertId, codeEmail: codeEmail, active: active}]
+                        //éxito al agregar el usuario
+                        let token = jwt.sign({data: user}, 'secret')
+                        res.send({status: 1, data: user, token: token});
                     }
                 })
+            } else{
+                //error porque existe usuario
+                res.send({status: 1, data: 'existente'});
             }
         });
     } catch(error){
+        //error de conexión
         res.send({status: 0, error: error});
     }
 });
@@ -48,6 +56,96 @@ router.post('/login', async function(req, res, next){
         const hashed_password = md5(password.toString())
         const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
         con.query(sql, [email, hashed_password], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                let token = jwt.sign({data: result}, 'secret')
+                res.send({status: 1, data: result, token: token});
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+router.post('/forgot', async function(req, res, next){
+    try{
+        let {email} = req.body;
+
+        const checkEmail = `SELECT * FROM users WHERE email = ?`;
+        con.query(checkEmail, [email], (err, result, fields) => {
+            if (!result.length) {
+                //no encontró el email
+                res.send({status: 1, data: 'noencontrado'});
+            } else{
+                //encontró el email
+                res.send({status: 1, data: result});
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+});
+
+router.put('/verificate-user', async function(req, res, next){
+    try{
+        let {codeEmail, id} = req.body;
+
+        const checkEmail = `SELECT codeEmail FROM users WHERE id = ?`;
+        con.query(checkEmail, [id], (err, result, fields) => {
+            if (!result.length) {
+                //compruebo el codeEmail con el que me llegó
+                const sql = `INSERT INTO users (email, password, rol, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
+                con.query(sql, [email, hashed_password, rol, codeEmail, active], (err, result, fields) => {
+                    if (err) {
+                        //error de conexion o para agregar el usuario
+                        res.send({status: 0, data: err});
+                    } else {
+                        let user = [{email: email, password: hashed_password, rol: rol, id: result.insertId, codeEmail: codeEmail, active: active}]
+                        //éxito al agregar el usuario
+                        let token = jwt.sign({data: user}, 'secret')
+                        res.send({status: 1, data: user, token: token});
+                    }
+                })
+            } else{
+                //error porque existe usuario
+                res.send({status: 1, data: 'existente'});
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+});
+
+router.put('/updatepassword', async function(req, res, next){
+    try {
+        let {id, password} = req.body;
+
+        const hashed_password = md5(password.toString())
+        const sql = `UPDATE users SET password = ? WHERE id = ?`;
+        con.query(sql, [hashed_password, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                let token = jwt.sign({data: result}, 'secret')
+                res.send({status: 1, data: result, token: token});
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+router.put('/updateemail', async function(req, res, next){
+    try {
+        let {id, email, codeEmail, active} = req.body;
+
+        const sql = `UPDATE users SET email = ?, codeEmail = ?, active = ? WHERE id = ?`;
+        con.query(sql, [email, codeEmail, active, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
