@@ -15,7 +15,7 @@ const con = mysql.createConnection({
     database:"api_db"
 });
 
-//Obtener el listado de usuarios(GET)
+//Registra un usuario nuevo
 router.post('/register', async function(req, res, next){
     try{
         let {email, password, rol, codeEmail, active} = req.body;
@@ -49,6 +49,7 @@ router.post('/register', async function(req, res, next){
     }
 });
 
+//Comprueba las credenciales de usuario y dá acceso
 router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
@@ -69,6 +70,7 @@ router.post('/login', async function(req, res, next){
     }
 });
 
+//Comprueba que el correo electrónico pertenezca a una cuenta y envía las credenciales
 router.post('/forgot', async function(req, res, next){
     try{
         let {email} = req.body;
@@ -89,6 +91,7 @@ router.post('/forgot', async function(req, res, next){
     }
 });
 
+/*
 router.put('/verificate-user', async function(req, res, next){
     try{
         let {codeEmail, id} = req.body;
@@ -165,5 +168,6 @@ router.put('/updateemail', async function(req, res, next){
     }
 });
 
+*/
 
 module.exports = router;
