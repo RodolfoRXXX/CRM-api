@@ -95,10 +95,11 @@ router.put('/updateemail', async function(req, res, next){
     }
 });
 
-router.post('/getTagPersonas', auth.verifyToken, async (req, res, next) => {
+//Obtiene todos los tags de un usuario
+router.post('/getAllTags', auth.verifyToken, async (req, res, next) => {
     try {
-        let {id} = req.body;
-        const sql = `SELECT * FROM personas WHERE id_autor = ?`;
+        let {id, tabla} = req.body;
+        const sql = `SELECT * FROM ${tabla} WHERE id_autor = ?`;
         con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -111,6 +112,25 @@ router.post('/getTagPersonas', auth.verifyToken, async (req, res, next) => {
         res.send({status: 0, error: error});
     }
 });
+
+//Obtiene el tag elegido para ver/modificar/vincular
+router.post('/getTag', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, tabla} = req.body;
+        const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
+        con.query(sql, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result});
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 
 router.get('/', auth.verifyToken, async (req, res) => {
     //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
