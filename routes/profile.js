@@ -96,7 +96,7 @@ router.put('/updateemail', async function(req, res, next){
 });
 
 //Obtiene todos los tags de un usuario
-router.post('/getAllTags', auth.verifyToken, async (req, res, next) => {
+router.post('/get-all-tag', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT * FROM ${tabla} WHERE id_autor = ?`;
@@ -114,7 +114,7 @@ router.post('/getAllTags', auth.verifyToken, async (req, res, next) => {
 });
 
 //Obtiene el tag elegido para ver/modificar/vincular
-router.post('/getTag', auth.verifyToken, async (req, res, next) => {
+router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
@@ -125,6 +125,25 @@ router.post('/getTag', auth.verifyToken, async (req, res, next) => {
                 res.send({status: 1, data: result});
             }
         })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Crea un nuevo Tag
+router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
+    try {
+        console.log(req.body);
+        res.send({status: 1, data: 'message received'});
+        /*const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
+        con.query(sql, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result});
+            }
+        })*/
 
     } catch (error) {
         res.send({status: 0, error: error});
