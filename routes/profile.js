@@ -3,6 +3,11 @@ const router  = express.Router();
 const auth    = require('../middleware/auth');
 const app     = express();
 const keys    = require('../settings/keys');
+const path = require('path');
+const cors = require('cors');
+const fs = require("fs");
+const Jimp = require("jimp");
+
 app.set('keys', keys.key);
 
 const md5     = require('md5');
@@ -134,16 +139,33 @@ router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
 //Crea un nuevo Tag
 router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
     try {
-        console.log(req.body);
-        res.send({status: 1, data: 'message received'});
-        /*const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
-        con.query(sql, id, (err, result, field) => {
-            if (err) {
-                res.send({status: 0, data: err});
-            } else {
-                res.send({status: 1, data: result});
-            }
-        })*/
+        let form = req.body.form; //formulario
+        let image = req.body.data; //foto
+
+        let nombre = 'imagen';
+        let base64Image = image.split(';base64,').pop();
+        let ext = (image.split(';base64,')[0]).split('/')[1];
+        //fs.writeFile('uploads/' + nombre + '.' + ext, base64Image, {encoding: 'base64'}, () => {
+        //fs.writeFile(buff, base64Image, {encoding: 'base64'}, () => {
+        //});
+        var buff = Buffer.from(base64Image, 'base64');
+        Jimp.read(buff)
+        .then(async image => {
+            console.log("image opened");
+
+            // thumbnail
+            const thumbnail = image.clone();
+            //thumbnail.scaleToFit(128, 128);
+            thumbnail.cover(250, 250, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_CENTER);
+            thumbnail.quality(95);
+            thumbnail.writeAsync('uploads/mall_thumbnail' + '.' + ext )
+                     .then(() => console.log("thumbnail saved"))
+                     .catch(err => { console.error(err); });
+        })
+        .catch(err => {
+            console.error(err);
+        });
+        res.send({status: 1, data: form});
 
     } catch (error) {
         res.send({status: 0, error: error});
