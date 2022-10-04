@@ -156,16 +156,33 @@ router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
 
 //Edita un Tag existente
 router.post('/edit-tag', auth.verifyToken, async (req, res, next) => {
+    let data = {};
     try {
-        let form = req.body; //formulario
-        if(req.body.foto){
-            await save_image(req.body.foto, req.body.nombre).then( (value) => {
-                console.log(value);
-                form = value;
+        if(req.body.tabla != ''){
+            data = req.body;
+        } else{
+            throw new Error('Tabla no definida');
+        }
+        if(data.foto){
+            await save_image(data.foto, data.id).then( (ruta_imagen) => {
+                if(ruta_imagen == 'error'){
+                    throw new Error('No se guardó la imagen');
+                }
+                data.foto = ruta_imagen;
             } )
         }
+        console.log(Object.entries(data));
+        /*const sql = `UPDATE ? SET ? WHERE id = ?`
+        con.query(sql, [ data.tabla, data.value, data.id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                let token = jwt.sign({data: result}, 'secret')
+                res.send({status: 1, data: result, token: token});
+            }
+        })*/
 
-        res.send({status: 1, data: form});
+        res.send({status: 1, data: 'hola'});
 
     } catch (error) {
         res.send({status: 0, error: error});
