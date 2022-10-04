@@ -13,6 +13,7 @@ app.set('keys', keys.key);
 const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
 const mysql   = require('mysql');
+const save_image = require('../functions/saveImage');
 
 const con = mysql.createConnection({
     host: "localhost",
@@ -139,32 +140,31 @@ router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
 //Crea un nuevo Tag
 router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
     try {
-        let form = req.body.form; //formulario
-        let image = req.body.data; //foto
+        let form = req.body; //formulario
+        if(req.body.foto){
+            save_image(req.body.foto, req.body.nombre).then( (value) => {
+                console.log(value);
+            } )
+        }
 
-        let nombre = 'imagen';
-        let base64Image = image.split(';base64,').pop();
-        let ext = (image.split(';base64,')[0]).split('/')[1];
-        //fs.writeFile('uploads/' + nombre + '.' + ext, base64Image, {encoding: 'base64'}, () => {
-        //fs.writeFile(buff, base64Image, {encoding: 'base64'}, () => {
-        //});
-        var buff = Buffer.from(base64Image, 'base64');
-        Jimp.read(buff)
-        .then(async image => {
-            console.log("image opened");
+        
 
-            // thumbnail
-            const thumbnail = image.clone();
-            //thumbnail.scaleToFit(128, 128);
-            thumbnail.cover(250, 250, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_CENTER);
-            thumbnail.quality(95);
-            thumbnail.writeAsync('uploads/mall_thumbnail' + '.' + ext )
-                     .then(() => console.log("thumbnail saved"))
-                     .catch(err => { console.error(err); });
-        })
-        .catch(err => {
-            console.error(err);
-        });
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Edita un Tag existente
+router.post('/edit-tag', auth.verifyToken, async (req, res, next) => {
+    try {
+        let form = req.body; //formulario
+        if(req.body.foto){
+            await save_image(req.body.foto, req.body.nombre).then( (value) => {
+                console.log(value);
+                form = value;
+            } )
+        }
+
         res.send({status: 1, data: form});
 
     } catch (error) {
