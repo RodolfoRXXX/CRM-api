@@ -147,7 +147,7 @@ router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
             throw 'Tabla no definida';
         }
         if(data.foto.includes(';base64,')){
-            await save_image(data.foto, data.id)
+            await save_image(data.foto, data.id, data.id_autor, data.tabla)
             .then( ruta_imagen => {
                 if(ruta_imagen == 'error') throw 'error';
                 data.foto = ruta_imagen;
@@ -197,7 +197,7 @@ router.put('/edit-tag', auth.verifyToken, async (req, res, next) => {
             throw 'Tabla no definida';
         }
         if(data.foto.includes(';base64,')){
-            await save_image(data.foto, data.id)
+            await save_image(data.foto, data.id, data.id_autor, data.tabla)
             .then( ruta_imagen => {
                 if(ruta_imagen == 'error') throw 'error';
                 data.foto = ruta_imagen;
