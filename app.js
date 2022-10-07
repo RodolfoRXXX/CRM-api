@@ -8,6 +8,7 @@ const fs = require("fs")
 //inicialización
 const app = express();
 app.use(express.json({limit: '10mb'}));
+app.use(express.static('public'));
 
 //setting
 app.set('port', port);

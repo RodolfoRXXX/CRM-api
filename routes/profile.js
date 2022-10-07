@@ -139,53 +139,96 @@ router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
 
 //Crea un nuevo Tag
 router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
-    try {
-        let form = req.body; //formulario
-        if(req.body.foto){
-            save_image(req.body.foto, req.body.nombre).then( (value) => {
-                console.log(value);
-            } )
-        }
-
-        
-
-    } catch (error) {
-        res.send({status: 0, error: error});
-    }
-});
-
-//Edita un Tag existente
-router.post('/edit-tag', auth.verifyToken, async (req, res, next) => {
     let data = {};
     try {
         if(req.body.tabla != ''){
             data = req.body;
         } else{
-            throw new Error('Tabla no definida');
+            throw 'Tabla no definida';
         }
-        if(data.foto){
-            await save_image(data.foto, data.id).then( (ruta_imagen) => {
-                if(ruta_imagen == 'error'){
-                    throw new Error('No se guardó la imagen');
-                }
+        if(data.foto.includes(';base64,')){
+            await save_image(data.foto, data.id)
+            .then( ruta_imagen => {
+                if(ruta_imagen == 'error') throw 'error';
                 data.foto = ruta_imagen;
             } )
+            .catch( error => {
+                throw error;
+            } )
         }
-        console.log(Object.entries(data));
-        /*const sql = `UPDATE ? SET ? WHERE id = ?`
-        con.query(sql, [ data.tabla, data.value, data.id], (err, result, field) => {
+        let arr_fields = [];
+        let arr_values = [];
+        Object.entries(data).map( element => {
+            if((element[0] != 'tabla')&&(element[0] != 'id')){
+                if(element[0] == 'id_autor'){
+                    arr_fields.push('`' + element[0] + '`');
+                    arr_values.push(element[1]);
+                } else{
+                    arr_fields.push('`' + element[0] + '`');
+                    arr_values.push('\'' + element[1] + '\'');
+                }
+            }
+        } )
+        let fields = arr_fields.join();
+        let values = arr_values.join();
+        const sql = `INSERT INTO ${data.tabla} (${fields}) VALUES (${values})`;
+        con.query(sql, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
-                res.send({status: 1, data: result, token: token});
+                res.send({status: 1, data: result});
             }
-        })*/
-
-        res.send({status: 1, data: 'hola'});
+        })
+        //res.send({status: 1, data: fields, data1: values});
 
     } catch (error) {
-        res.send({status: 0, error: error});
+        console.error(error);
+        res.send({status: 0, data: error});
+    }
+});
+
+//Edita un Tag existente
+router.put('/edit-tag', auth.verifyToken, async (req, res, next) => {
+    let data = {};
+    try {
+        if(req.body.tabla != ''){
+            data = req.body;
+        } else{
+            throw 'Tabla no definida';
+        }
+        if(data.foto.includes(';base64,')){
+            await save_image(data.foto, data.id)
+            .then( ruta_imagen => {
+                if(ruta_imagen == 'error') throw 'error';
+                data.foto = ruta_imagen;
+            } )
+            .catch( error => {
+                throw error;
+            } )
+        }
+        let arr = [];
+        Object.entries(data).map( element => {
+            if(element[0] != 'tabla'){
+                if((element[0] == 'id')||(element[0] == 'id_autor')){
+                    arr.push('`' + element[0] + '`=' + element[1]);
+                } else{
+                    arr.push('`' + element[0] + '`=\'' + element[1] + '\'');
+                }
+            }
+        } )
+        let datos = arr.join();
+        const sql = `UPDATE ${data.tabla} SET ${datos} WHERE id = ?`
+        con.query(sql, [data.id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result});
+            }
+        })
+
+    } catch (error) {
+        console.error(error);
+        res.send({status: 0, data: error});
     }
 });
 

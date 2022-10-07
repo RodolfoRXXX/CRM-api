@@ -2,8 +2,6 @@ const fs = require("fs");
 const Jimp = require("jimp");
 
 async function save_image( imagen, id){
-    console.log(imagen);
-    console.log(id);
     try {
         let base64Image = imagen.split(';base64,').pop();
         let nombre = id + '-thumbnail.' + (imagen.split(';base64,')[0]).split('/')[1];
@@ -13,8 +11,9 @@ async function save_image( imagen, id){
                       await image.cover(350, 350, Jimp.HORIZONTAL_ALIGN_CENTER | Jimp.VERTICAL_ALIGN_CENTER);
                       await image.quality(95);
                       await image.writeAsync( ruta );
-        return ruta;
+        return nombre;
     } catch (error) {
+        console.error(error);
         return 'error';
     }
     
