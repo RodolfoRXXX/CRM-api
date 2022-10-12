@@ -18,7 +18,7 @@ const con = mysql.createConnection({
 //Registra un usuario nuevo
 router.post('/register', async function(req, res, next){
     try{
-        let {email, password, rol, codeEmail, active} = req.body;
+        let {email, password, nombre, codeEmail, active} = req.body;
 
         const hashed_password = md5(password.toString())
 
@@ -26,13 +26,13 @@ router.post('/register', async function(req, res, next){
         con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
                 //exito en no encontrar usuario
-                const sql = `INSERT INTO users (email, password, rol, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
-                con.query(sql, [email, hashed_password, rol, codeEmail, active], (err, result, fields) => {
+                const sql = `INSERT INTO users (email, password, nombre, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
+                con.query(sql, [email, hashed_password, nombre, codeEmail, active], (err, result, fields) => {
                     if (err) {
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
-                        let user = [{email: email, password: hashed_password, rol: rol, id: result.insertId, codeEmail: codeEmail, active: active}]
+                        let user = [{email: email, password: hashed_password, nombre: nombre, id: result.insertId, codeEmail: codeEmail, active: active}]
                         //éxito al agregar el usuario
                         let token = jwt.sign({data: user}, 'secret')
                         res.send({status: 1, data: user, token: token});
