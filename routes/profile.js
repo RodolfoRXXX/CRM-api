@@ -232,6 +232,35 @@ router.put('/edit-tag', auth.verifyToken, async (req, res, next) => {
     }
 });
 
+//Busca el QR vinculado de un registro
+router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, tabla} = req.body;
+        const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
+        con.query(sql, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result[0].id_qr == 0){
+                    res.send({status: 1, data: 'nolink'});
+                } else{
+                    const sql_qr = `SELECT * FROM tablaqr WHERE id = ?`;
+                    con.query(sql_qr, result[0].id_qr, (err, result, field) => {
+                    if (err) {
+                        res.send({status: 0, data: err});
+                    } else {
+                        res.send({status: 1, data: result});
+                    }
+                })
+                }                
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 
 router.get('/', auth.verifyToken, async (req, res) => {
     //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
