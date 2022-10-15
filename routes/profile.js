@@ -263,10 +263,6 @@ router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
 
 //Linkea un tag_qr con un tag_id
     //Vincular
-        //(SELECT tablaqr) se debe comprobar que el código existe en tablaqr
-        //si existe, devuelve el registro / si no existe, devuelve que no existe
-        //(UPDATE personas/mascotas/vehiculos) el id del registro se actualiza en el registro de personas, mascotas o vehiculos
-        //(UPDATE tablaqr) se actualiza el tipo(personas, mascotas o vehiculos) de ese registro en tablaqr
 router.post('/update-tag-link', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, codigo, tabla} = req.body;
@@ -276,7 +272,7 @@ router.post('/update-tag-link', auth.verifyToken, async (req, res, next) => {
                 res.send({status: 0, data: err});
             } else {
                 if(!result.length){
-                    res.send({status: 1, data: 'codigo inexistente'});
+                    res.send({status: 0, data: 'codigo inexistente'});
                 } else{
                     let id_qr = result[0].id;
                     const sql_update = `UPDATE ${tabla} SET id_qr = ?, estado = ? WHERE id = ?`;
@@ -289,6 +285,52 @@ router.post('/update-tag-link', auth.verifyToken, async (req, res, next) => {
                             } else{
                                 const sql_update_qr = `UPDATE tablaqr SET tipo = ? WHERE id = ?`;
                                 con.query(sql_update_qr, [tabla, id_qr], (err, result, field) => {
+                                    if (err) {
+                                        res.send({status: 0, data: err});
+                                    } else {
+                                        if(result.affectedRows == 0){
+                                            res.send({status: 0, data: 'tipo en tablaqr no actualizado'});
+                                        } else{
+                                            res.send({status: 1, data: result})
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                })
+                }                
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Linkea un tag_qr con un tag_id
+    //Desvincular
+router.post('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, codigo, tabla} = req.body;
+        const sql = `SELECT * FROM tablaqr WHERE codigo = ?`;
+        con.query(sql, codigo, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(!result.length){
+                    res.send({status: 1, data: 'codigo inexistente'});
+                } else{
+                    let id_qr = result[0].id;
+                    const sql_update = `UPDATE ${tabla} SET id_qr = 0, estado = 'nolink' WHERE id = ?`;
+                    con.query(sql_update, parseInt(id), (err, result, field) => {
+                        if (err) {
+                            res.send({status: 0, data: err});
+                        } else {
+                            if(result.affectedRows == 0){
+                                res.send({status: 0, data: 'id_qr no eliminado'});
+                            } else{
+                                const sql_update_qr = `UPDATE tablaqr SET tipo = '' WHERE id = ?`;
+                                con.query(sql_update_qr, id_qr, (err, result, field) => {
                                     if (err) {
                                         res.send({status: 0, data: err});
                                     } else {
