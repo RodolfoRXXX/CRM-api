@@ -433,6 +433,33 @@ router.put('/delete-tag-alert', auth.verifyToken, async (req, res, next) => {
     }
 });
 
+//Eliminar un tag
+router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, tabla} = req.body;
+        const sql_data = `SELECT * FROM ${tabla} WHERE id = ?`;
+        con.query(sql_data, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(fs.existsSync('./public/uploads/' + result[0].foto)){
+                    fs.unlinkSync('./public/uploads/' + result[0].foto);
+                }
+                const sql = `DELETE FROM ${tabla} WHERE id = ?`;
+                con.query(sql, id, (err, result, field) => {
+                    if (err) {
+                        res.send({status: 0, data: err});
+                    } else {
+                        res.send({status: 1, data:result});
+                    }                
+                })
+            }                
+        })
+        } catch (error) {
+            res.send({status: 0, error: error});
+        }
+});
+
 router.get('/', auth.verifyToken, async (req, res) => {
     //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
 
