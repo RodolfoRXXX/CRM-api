@@ -263,7 +263,7 @@ router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
 
 //Linkea un tag_qr con un tag_id
     //Vincular
-router.post('/update-tag-link', auth.verifyToken, async (req, res, next) => {
+router.put('/update-tag-link', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, codigo, tabla} = req.body;
         const sql = `SELECT * FROM tablaqr WHERE codigo = ?`;
@@ -309,7 +309,7 @@ router.post('/update-tag-link', auth.verifyToken, async (req, res, next) => {
 
 //Linkea un tag_qr con un tag_id
     //Desvincular
-router.post('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
+router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, codigo, tabla} = req.body;
         const sql = `SELECT * FROM tablaqr WHERE codigo = ?`;
@@ -348,6 +348,86 @@ router.post('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
             }
         })
 
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Obtener el estado de alerta de un tag
+router.post('/get-tag-alert', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, tabla} = req.body;
+        const sql = `SELECT estado, obsestado FROM ${tabla} WHERE id = ?`;
+        con.query(sql, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data:result});
+            }                
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Crear un alerta sobre un tag
+router.put('/create-tag-alert', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, obsestado, tabla} = req.body;
+        const sql = `UPDATE ${tabla} SET estado = ?, obsestado = ? WHERE id = ?`;
+        con.query(sql, ['alert', obsestado, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.affectedRows == 0){
+                    res.send({status: 0, data: 'error'});
+                } else{
+                    res.send({status: 1, data: 'ok'})
+                }
+            }                
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Editar un alerta sobre un tag
+router.put('/edit-tag-alert', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, obsestado, tabla} = req.body;
+        const sql = `UPDATE ${tabla} SET obsestado = ? WHERE id = ?`;
+        con.query(sql, [obsestado, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.affectedRows == 0){
+                    res.send({status: 0, data: 'error'});
+                } else{
+                    res.send({status: 1, data: 'ok'})
+                }
+            }                
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
+//Eliminar un alerta sobre un tag
+router.put('/delete-tag-alert', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, tipo} = req.body;
+        const sql = `UPDATE ${tipo} SET estado = ?, obsestado = '' WHERE id = ?`;
+        con.query(sql, ['link', id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.affectedRows == 0){
+                    res.send({status: 0, data: 'error'});
+                } else{
+                    res.send({status: 1, data: 'ok'})
+                }
+            }                
+        })
     } catch (error) {
         res.send({status: 0, error: error});
     }
