@@ -101,6 +101,26 @@ router.put('/updateemail', async function(req, res, next){
     }
 });
 
+//Actualiza el nombre de usuario
+router.put('/update-username', async function(req, res, next){
+    try {
+        let {id, nombre} = req.body;
+
+        const sql = `UPDATE users SET nombre = ? WHERE id = ?`;
+        con.query(sql, [nombre, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                let token = jwt.sign({data: result}, 'secret')
+                res.send({status: 1, data: result, token: token});
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 //Obtiene todos los tags de un usuario
 router.post('/get-all-tag', auth.verifyToken, async (req, res, next) => {
     try {
@@ -357,7 +377,7 @@ router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
 router.post('/get-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
-        const sql = `SELECT estado, obsestado FROM ${tabla} WHERE id = ?`;
+        const sql = `SELECT estado, obsestado, fechaestado FROM ${tabla} WHERE id = ?`;
         con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -373,9 +393,9 @@ router.post('/get-tag-alert', auth.verifyToken, async (req, res, next) => {
 //Crear un alerta sobre un tag
 router.put('/create-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
-        let {id, obsestado, tabla} = req.body;
-        const sql = `UPDATE ${tabla} SET estado = ?, obsestado = ? WHERE id = ?`;
-        con.query(sql, ['alert', obsestado, id], (err, result, field) => {
+        let {id, obsestado, fechaestado, tabla} = req.body;
+        const sql = `UPDATE ${tabla} SET estado = ?, obsestado = ?, fechaestado = ? WHERE id = ?`;
+        con.query(sql, ['alert', obsestado, fechaestado, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -394,7 +414,7 @@ router.put('/create-tag-alert', auth.verifyToken, async (req, res, next) => {
 //Editar un alerta sobre un tag
 router.put('/edit-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
-        let {id, obsestado, tabla} = req.body;
+        let {id, obsestado, fechaestado, tabla} = req.body;
         const sql = `UPDATE ${tabla} SET obsestado = ? WHERE id = ?`;
         con.query(sql, [obsestado, id], (err, result, field) => {
             if (err) {
@@ -416,7 +436,7 @@ router.put('/edit-tag-alert', auth.verifyToken, async (req, res, next) => {
 router.put('/delete-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tipo} = req.body;
-        const sql = `UPDATE ${tipo} SET estado = ?, obsestado = '' WHERE id = ?`;
+        const sql = `UPDATE ${tipo} SET estado = ?, obsestado = '', fechaestado = '' WHERE id = ?`;
         con.query(sql, ['link', id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
