@@ -480,6 +480,76 @@ router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
         }
 });
 
+//Obtiene la suma de todos los tags para el dashboard
+router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id} = req.body;
+        let total = 0;
+        let link = 0;
+        let nolink = 0;
+        let alert = 0;
+        const sql_personas = `SELECT * FROM personas WHERE id_autor = ?`;
+        con.query(sql_personas, id, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    result.forEach(element => {
+                        if(element.estado == 'link'){
+                            link++;
+                        } else if(element.estado == 'nolink'){
+                            nolink++;
+                        } else{
+                            alert++;
+                        }
+                    });
+                }
+                const sql_mascotas = `SELECT * FROM mascotas WHERE id_autor = ?`;
+                con.query(sql_mascotas, id, (err, result, field) => {
+                    if (err) {
+                        res.send({status: 0, data: err});
+                    } else {
+                        if(result.length){
+                            result.forEach(element => {
+                                if(element.estado == 'link'){
+                                    link++;
+                                } else if(element.estado == 'nolink'){
+                                    nolink++;
+                                } else{
+                                    alert++;
+                                }
+                            });
+                        }
+                        const sql_vehiculos = `SELECT * FROM vehiculos WHERE id_autor = ?`;
+                        con.query(sql_vehiculos, id, (err, result, field) => {
+                            if (err) {
+                                res.send({status: 0, data: err});
+                            } else {
+                                if(result.length){
+                                    result.forEach(element => {
+                                        if(element.estado == 'link'){
+                                            link++;
+                                        } else if(element.estado == 'nolink'){
+                                            nolink++;
+                                        } else{
+                                            alert++;
+                                        }
+                                    });
+                                }
+                                total = link + nolink + alert;
+                                res.send({status: 1, data:{total:total, link:link, nolink:nolink, alert:alert}});
+                            }
+                        })
+                    }
+                })
+            }
+        })
+
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 router.get('/', auth.verifyToken, async (req, res) => {
     //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
 
