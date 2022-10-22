@@ -91,83 +91,50 @@ router.post('/forgot', async function(req, res, next){
     }
 });
 
-/*
-router.put('/verificate-user', async function(req, res, next){
+//Recibe el código externo y verifica si existe y entrega su información para ser mostrada
+router.post('/get-tag-out', async function(req, res, next){
     try{
-        let {codeEmail, id} = req.body;
-
-        const checkCode = `SELECT * FROM users WHERE id = ?`;
-        con.query(checkCode, [id], (err, result, fields) => {
-            if (result.length) {
-                //compruebo el codeEmail con el que me llegó
-                if(result[0].codeEmail == codeEmail){
-                    const sql = `UPDATE users SET active= ? WHERE id = ?`;
-                con.query(sql, [1, id], (err, info, fields) => {
-                    if (err) {
-                        //error de conexion o para agregar el usuario
-                        res.send({status: 0, data: err});
-                    } else {
-                        //EXITO!
-                        result[0].active = 1;
-                        let token = jwt.sign({data: result}, 'secret')
-                        res.send({status: 1, data: result, token: token});
-                    }
-                })
-                } else{
-                    //codeEmail incorrecto
-                    res.send({status: 1, data: 'error'});
-                }
-                
+        let {code} = req.body;
+        let tipo;
+        const checkQR = `SELECT * FROM tablaqr WHERE codigo = BINARY ?`;
+        con.query(checkQR, code, (err, result, fields) => {
+            if(err){
+                res.send({status: 0, data: err});
             } else{
-                //error porque no existe usuario
-                res.send({status: 1, data: 'error'});
+                if (!result.length) {
+                    //no encontró el qr
+                    res.send({status: 0, data: 'noqr'});
+                } else{
+                    //encontró el qr, ahora debe verificar si está utilizado
+                    if(!result[0].tipo){
+                        //el qr no está utilizado
+                        res.send({status: 0, data: 'nolink'}); 
+                    } else{
+                        //qr utilizado y devuelve valores
+                        tipo = result[0].tipo;
+                        const checkTag = `SELECT * FROM ${result[0].tipo} WHERE id_qr = ?`;
+                        con.query(checkTag, result[0].id, (err, result, fields) => {
+                            if(err){
+                                res.send({status: 0, data: err});
+                            } else{
+                                if (!result.length) {
+                                    //no encontró el tag asociado al qr obtenido previamente
+                                    res.send({status: 0, data: 'notag'});
+                                } else{
+                                    //Encontró el tag asociado al qr y lo devuelve
+                                    res.send({status: 1, data: result, tipo: tipo});
+                                }
+                            }    
+                        })
+                    }
+                }
             }
+            
         });
     } catch(error){
         //error de conexión
         res.send({status: 0, error: error});
     }
 });
-
-router.put('/updatepassword', async function(req, res, next){
-    try {
-        let {id, password} = req.body;
-
-        const hashed_password = md5(password.toString())
-        const sql = `UPDATE users SET password = ? WHERE id = ?`;
-        con.query(sql, [hashed_password, id], (err, result, field) => {
-            if (err) {
-                res.send({status: 0, data: err});
-            } else {
-                let token = jwt.sign({data: result}, 'secret')
-                res.send({status: 1, data: result, token: token});
-            }
-        })
-
-    } catch (error) {
-        res.send({status: 0, error: error});
-    }
-});
-
-router.put('/updateemail', async function(req, res, next){
-    try {
-        let {id, email, codeEmail, active} = req.body;
-
-        const sql = `UPDATE users SET email = ?, codeEmail = ?, active = ? WHERE id = ?`;
-        con.query(sql, [email, codeEmail, active, id], (err, result, field) => {
-            if (err) {
-                res.send({status: 0, data: err});
-            } else {
-                let token = jwt.sign({data: result}, 'secret')
-                res.send({status: 1, data: result, token: token});
-            }
-        })
-
-    } catch (error) {
-        res.send({status: 0, error: error});
-    }
-});
-
-*/
 
 module.exports = router;
