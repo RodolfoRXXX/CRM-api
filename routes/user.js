@@ -137,4 +137,47 @@ router.post('/get-tag-out', async function(req, res, next){
     }
 });
 
+//Obtiene todos los tags en alerta
+router.get('/get-lost-tag', async function(req, res, next){
+    try{
+        let personas = [];
+        let mascotas = [];
+        let vehiculos = [];
+        const sql_personas = `SELECT * FROM personas WHERE estado = 'alert'`;
+        con.query(sql_personas, (err, result, fields) => {
+            if(err){
+                res.send({status: 0, error: err});
+            } else{
+                if(result.length){
+                    personas.push(...result);
+                }
+                const sql_mascotas = `SELECT * FROM mascotas WHERE estado = 'alert'`;
+                con.query(sql_mascotas, (err, result, fields) => {
+                    if(err){
+                        res.send({status: 0, error: err});
+                    } else{
+                        if(result.length){
+                            mascotas.push(...result);
+                        }
+                        const sql_vehiculos = `SELECT * FROM vehiculos WHERE estado = 'alert'`;
+                        con.query(sql_vehiculos, (err, result, fields) => {
+                            if(err){
+                                res.send({status: 0, error: err});
+                            } else{
+                                if(result.length){
+                                    vehiculos.push(...result);
+                                }
+                                res.send({status: 1, data: {personas:personas, mascotas:mascotas, vehiculos:vehiculos}});
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+})
+
 module.exports = router;
