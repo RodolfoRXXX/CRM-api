@@ -87,7 +87,7 @@ router.post('/forgot', async function(req, res, next){
         });
     } catch(error){
         //error de conexión
-        res.send({status: 0, error: error});
+        res.send({status: 0, data: error});
     }
 });
 
@@ -179,5 +179,27 @@ router.get('/get-lost-tag', async function(req, res, next){
         res.send({status: 0, error: error});
     }
 })
+
+//Setea la posición GPS del tag encontrado
+router.post('/set-position-tag', async function(req, res, next){
+    try{
+        let {tipo, id_user, data} = req.body;
+        const sqlPosition = `UPDATE ${tipo} SET position = ? WHERE id = ?`;
+        con.query(sqlPosition, [data, id_user], (err, result, fields) => {
+            if(err){
+                res.send({status: 0, data: err});
+            } else{
+                if(result.affectedRows == 0){
+                    res.send({status: 0, data: 'error'});
+                } else{
+                    res.send({status: 1, data: 'ok'});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, data: error});
+    }
+});
 
 module.exports = router;
