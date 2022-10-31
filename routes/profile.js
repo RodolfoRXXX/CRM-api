@@ -550,6 +550,50 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
     }
 });
 
+//Obtiene todos los tags en alerta de un usuario, pero que han sido encontrados
+router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id} = req.body;
+        let personas = [];
+        let mascotas = [];
+        let vehiculos = [];
+        const sql_personas = `SELECT * FROM personas WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
+        con.query(sql_personas, id, (err, result, fields) => {
+            if(err){
+                res.send({status: 0, error: err});
+            } else{
+                if(result.length){
+                    personas.push(...result);
+                }
+                const sql_mascotas = `SELECT * FROM mascotas WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
+                con.query(sql_mascotas, id, (err, result, fields) => {
+                    if(err){
+                        res.send({status: 0, error: err});
+                    } else{
+                        if(result.length){
+                            mascotas.push(...result);
+                        }
+                        const sql_vehiculos = `SELECT * FROM vehiculos WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
+                        con.query(sql_vehiculos, id, (err, result, fields) => {
+                            if(err){
+                                res.send({status: 0, error: err});
+                            } else{
+                                if(result.length){
+                                    vehiculos.push(...result);
+                                }
+                                res.send({status: 1, data: {personas:personas, mascotas:mascotas, vehiculos:vehiculos}});
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+})
+
 router.get('/', auth.verifyToken, async (req, res) => {
     //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
 
