@@ -11,12 +11,14 @@
   "author": "ROdolfo Romero",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^1.20.1",
     "cors": "^2.8.5",
     "express": "^4.18.1",
     "jimp": "^0.16.2",
     "jsonwebtoken": "^8.5.1",
     "md5": "^2.3.0",
     "mysql": "^2.18.1",
+    "nodemailer": "^6.8.0",
     "nodemon": "^2.0.19",
     "util": "^0.12.4"
   }

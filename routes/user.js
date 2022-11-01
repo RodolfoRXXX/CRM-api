@@ -2,6 +2,12 @@ const express = require('express');
 const router  = express.Router();
 const app = express();
 const keys = require('../settings/keys');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const configmensaje = require('./configmensaje');
+
+app.use(bodyParser.json());
+app.use(cors());
 app.set('keys', keys.key);
 
 const md5     = require('md5');
@@ -201,5 +207,11 @@ router.post('/set-position-tag', async function(req, res, next){
         res.send({status: 0, data: error});
     }
 });
+
+//Envía correo electrónico
+router.post('/envio-email', (req, res) => {
+    configmensaje(req.body);
+    res.status(200).send();
+})
 
 module.exports = router;

@@ -591,7 +591,6 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                                     tag.latitud = JSON.parse(element.position).latitud;
                                     tag.longitud = JSON.parse(element.position).longitud;
                                     tag.fecha = JSON.parse(element.position).fecha;
-                                    console.log(tag)
                                     array[i] = tag;
                                     i++;
                                 } )
@@ -603,7 +602,6 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                                     tag.latitud = JSON.parse(element.position).latitud;
                                     tag.longitud = JSON.parse(element.position).longitud;
                                     tag.fecha = JSON.parse(element.position).fecha;
-                                    console.log(tag)
                                     array[i] = tag;
                                     i++;
                                 } )
@@ -615,7 +613,6 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                                     tag.latitud = JSON.parse(element.position).latitud;
                                     tag.longitud = JSON.parse(element.position).longitud;
                                     tag.fecha = JSON.parse(element.position).fecha;
-                                    console.log(tag)
                                     array[i] = tag;
                                     i++;
                                 } )
