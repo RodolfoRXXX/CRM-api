@@ -557,6 +557,8 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
         let personas = [];
         let mascotas = [];
         let vehiculos = [];
+        let array = [];
+        let tag = {id:null, titulo:null, obs:null, latitud:null, longitud:null, fecha:null};
         const sql_personas = `SELECT * FROM personas WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
         con.query(sql_personas, id, (err, result, fields) => {
             if(err){
@@ -581,7 +583,43 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                                 if(result.length){
                                     vehiculos.push(...result);
                                 }
-                                res.send({status: 1, data: {personas:personas, mascotas:mascotas, vehiculos:vehiculos}});
+                                let i = 0;
+                                personas.forEach( element => {
+                                    tag.id = i;
+                                    tag.titulo = element.nombre + ' ' + element.apellido;
+                                    tag.obs = element.obsestado;
+                                    tag.latitud = JSON.parse(element.position).latitud;
+                                    tag.longitud = JSON.parse(element.position).longitud;
+                                    tag.fecha = JSON.parse(element.position).fecha;
+                                    console.log(tag)
+                                    array[i] = tag;
+                                    i++;
+                                } )
+                                tag = {id:null, titulo:null, obs:null, latitud:null, longitud:null, fecha:null}
+                                mascotas.forEach( element => {
+                                    tag.id = i;
+                                    tag.titulo = element.especie + ' - ' + element.nombre;
+                                    tag.obs = element.obsestado;
+                                    tag.latitud = JSON.parse(element.position).latitud;
+                                    tag.longitud = JSON.parse(element.position).longitud;
+                                    tag.fecha = JSON.parse(element.position).fecha;
+                                    console.log(tag)
+                                    array[i] = tag;
+                                    i++;
+                                } )
+                                tag = {id:null, titulo:null, obs:null, latitud:null, longitud:null, fecha:null}
+                                vehiculos.forEach( element => {
+                                    tag.id = i;
+                                    tag.titulo = element.marca + ' - ' + element.modelo + ' - ' + element.color;
+                                    tag.obs = element.obsestado;
+                                    tag.latitud = JSON.parse(element.position).latitud;
+                                    tag.longitud = JSON.parse(element.position).longitud;
+                                    tag.fecha = JSON.parse(element.position).fecha;
+                                    console.log(tag)
+                                    array[i] = tag;
+                                    i++;
+                                } )
+                                res.send({status: 1, data: array});
                             }
                         });
                     }
