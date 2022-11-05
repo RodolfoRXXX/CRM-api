@@ -143,6 +143,23 @@ router.post('/get-tag-out', async function(req, res, next){
     }
 });
 
+//Buscar el email de un id_autor
+router.post('/get-email', async function(req, res, next){
+    try {
+        let {_id_autor} = req.body;
+        const sql = `SELECT email FROM users WHERE id = ?`
+        con.query(sql, _id_autor, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result});
+            }
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 //Obtiene todos los tags en alerta
 router.get('/get-lost-tag', async function(req, res, next){
     try{
@@ -209,9 +226,15 @@ router.post('/set-position-tag', async function(req, res, next){
 });
 
 //Envía correo electrónico
-router.post('/envio-email', (req, res) => {
-    configmensaje(req.body);
-    res.status(200).send();
+router.post('/envio-email', async function(req, res){
+    try {
+        console.log(req.body)
+        configmensaje(req.body);
+        res.send({status: 1, data: 'ok'});
+    } catch (error) {
+        //error de conexión
+        res.send({status: 0, data: error});
+    }
 })
 
 module.exports = router;

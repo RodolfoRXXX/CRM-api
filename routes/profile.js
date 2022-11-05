@@ -61,7 +61,7 @@ router.put('/verificate-user', async function(req, res, next){
 });
 
 //Actualiza la contraseña del usuario
-router.put('/updatepassword', async function(req, res, next){
+router.put('/update-password', async function(req, res, next){
     try {
         let {id, password} = req.body;
 
@@ -82,7 +82,7 @@ router.put('/updatepassword', async function(req, res, next){
 });
 
 //Actualiza el correo electrónico del usuario
-router.put('/updateemail', async function(req, res, next){
+router.put('/update-email', async function(req, res, next){
     try {
         let {id, email, codeEmail, active} = req.body;
 
