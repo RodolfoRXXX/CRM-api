@@ -11,33 +11,12 @@ module.exports = (formulario) => {
                                             Te damos una cordial bienvenida!
                                         </p>
                                     </div>
-                                    <div style="text-align: center; padding: 10px;">
+                                    <div style="text-align: center; margin: 20px 0;">
                                         <h1 style="font-family: Verdana, Arial; margin: auto; background-color: #EEEEEE; padding: 10px;border-radius: 10px; word-break: break-word; " >${formulario.data.codigo}</h1>
                                     </div>
                                     <div style="padding: 12px 10px; ">
                                         <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
-                                            Este es tu código de verificación, ingresalo para verificar tu correo electrónico y acceder a tu cuenta.
-                                        </p>
-                                    </div>
-                                </div>
-                            `;
-
-    let plantilla_forgot = `
-                                <div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
-                                    <div style="padding: 10px;">
-                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 18px; line-height: 20px; margin: auto; ">
-                                            Aquí están tus credenciales de acceso a tu cuenta
-                                        </p>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px; ">
-                                        <h3 style="font-family: Verdana, Arial; margin: auto; background-color: #EEEEEE; padding: 10px; border-radius: 10px; text-decoration: none; color: #000; word-break: break-word; ">${formulario.data.email}</h3>
-                                    </div>
-                                    <div style="text-align: center; padding: 10px;">
-                                        <h3 style="font-family: Verdana, Arial; margin: auto; background-color: #EEEEEE; padding: 10px; border-radius: 10px; word-break: break-word; " >${formulario.data.password}</h3>
-                                    </div>
-                                    <div style="padding: 12px 10px; ">
-                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
-                                            No compartas esta información de tu cuenta con nadie.
+                                            Este es tu código de verificación, ingresalo en tu cuenta para verificarla y poder acceder a todas sus funcionalidades.
                                         </p>
                                     </div>
                                 </div>
@@ -50,7 +29,7 @@ module.exports = (formulario) => {
                                             Este es tu código de verificación de cuenta
                                         </p>
                                     </div>
-                                    <div style="text-align: center; padding: 10px;">
+                                    <div style="text-align: center; margin: 20px 0;">
                                         <h1 style="font-family: Verdana, Arial; margin: auto; background-color: #EEEEEE; padding: 10px;border-radius: 10px; word-break: break-word; " >${formulario.data.codigo}</h1>
                                     </div>
                                     <div style="padding: 12px 10px; ">
@@ -65,15 +44,15 @@ module.exports = (formulario) => {
                                 <div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
                                     <div style="padding: 10px;">
                                         <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 18px; line-height: 20px; margin: auto; ">
-                                            Este es el código para que verifiques tu cuenta de correo
+                                            Alguien encontró tu tag en alerta
                                         </p>
                                     </div>
-                                    <div style="text-align: center; padding: 10px;">
-                                        <a style="font-family: Verdana, Arial;  text-align: center; padding: 10px; border-radius: 10px; background: rgb(13, 110, 253); text-decoration: none; color: #fff;" href="${formulario.data.web}" title="Ver la ubicación de mi tag!">Ver ubicación</a>
+                                    <div style="text-align: center; margin: 20px 0; ">
+                                        <a style="font-family: Verdana, Arial;  text-align: center; padding: 10px; border-radius: 10px; background: rgb(13, 110, 253); text-decoration: none; color: #fff;" href="${formulario.data.web}" title="Mi cuenta">Ir a mi cuenta</a>
                                     </div>
                                     <div style="padding: 12px 10px; ">
                                         <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
-                                            Ingresalo para poder acceder a todas las funcionalidades de tu cuenta.
+                                            ingresá a tu cuenta y mirá su ubicación para poder encontrarlo!
                                         </p>
                                     </div>
                                 </div>
@@ -86,7 +65,7 @@ module.exports = (formulario) => {
                                             Ha habido una actualización en tu cuenta
                                         </p>
                                     </div>
-                                    <div style="text-align: center; padding: 10px;">
+                                    <div style="text-align: center; margin: 20px 0;">
                                         <h4 style="font-family: Verdana, Arial;  margin: auto; text-align: center; background: #EEEEEE; padding: 10px;border-radius: 10px;" >- Cambio de contraseña -</h4>
                                     </div>
                                     <div style="padding: 12px 10px; ">
@@ -104,7 +83,7 @@ module.exports = (formulario) => {
                                             Ha habido una actualización en tu cuenta
                                         </p>
                                     </div>
-                                    <div style="text-align: center; padding: 10px;">
+                                    <div style="text-align: center; margin: 20px 0;">
                                         <h4 style="font-family: Verdana, Arial;  margin: auto; text-align: center; background: #EEEEEE; padding: 10px;border-radius: 10px;" >- Cambio de correo electrónico -</h4>
                                     </div>
                                     <div style="padding: 12px 10px; ">
@@ -138,12 +117,8 @@ module.exports = (formulario) => {
             title = 'Bienvenido a - QRlink -!';
             cuerpo = plantilla_register;
             break;
-        case 'forgot':
-            title = 'Credenciales de acceso - QRlink -';
-            cuerpo = plantilla_forgot;
-            break;
         case 'verificate':
-            title = 'Código de verificación - QRlink -';
+            title = 'Código de verificación';
             cuerpo = plantilla_verificate;
             break;
         case 'marker':
@@ -151,15 +126,15 @@ module.exports = (formulario) => {
             cuerpo = plantilla_marker;
             break;
         case 'change_pass':
-            title = 'Actualización de tu cuenta - QRlink -';
+            title = 'Actualización de tu cuenta';
             cuerpo = plantilla_change_pass;
             break;
         case 'change_mail':
-            title = 'Actualización de tu cuenta - QRlink -';
+            title = 'Actualización de tu cuenta';
             cuerpo = plantilla_change_mail;
             break;
         case 'change_user':
-            title = 'Actualización de tu cuenta - QRlink -';
+            title = 'Actualización de tu cuenta';
             cuerpo = plantilla_change_user;
             break;
     }
@@ -188,8 +163,8 @@ module.exports = (formulario) => {
 
     let email ={ 
         from:"info@qrlink.com.ar",  //remitente
-        //to:`${formulario.email}`,  //destinatario
-        to:`rodolfo.singular@gmail.com`,
+        to:`${formulario.email}`,  //destinatario
+        //to:`rodolfo.singular@gmail.com`,
         subject: title,  //asunto del correo
         html:` 
             <table style="margin: auto;">
@@ -205,7 +180,7 @@ module.exports = (formulario) => {
                 <tbody>
                     <tr>
                         <td style="width: 360px; height: 75px; background-color: #fff; border-radius: 10px; box-sizing: border-box; border: 0.25px solid grey; padding: 25px 20px;">
-                            <h3 style="font-family: Trebuchet MS, Helvetica; margin: 0 10px; text-align: center;">${title}</h3>
+                            <h2 style="font-family: Trebuchet MS, Helvetica; margin: 0 10px; text-align: center;">${title}</h2>
                         </td>
                     </tr>
                     <tr>
@@ -224,11 +199,11 @@ module.exports = (formulario) => {
     };
     let createTransport = nodemailer.createTransport(jConfig);
 
-    createTransport.sendMail(email, function (error, info) { 
+    createTransport.sendMail(email, function (error, info) {
         if(error){ 
-             console.log("Error al enviar email" + error); 
+             console.log("Error al enviar email" + error);
         } else{ 
-             console.log("Correo enviado correctamente"); 
+             console.log("Correo enviado correctamente");
         } 
         createTransport.close(); 
     });

@@ -13,6 +13,7 @@ app.set('keys', keys.key);
 const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
 const mysql   = require('mysql');
+const { restart } = require('nodemon');
 
 const con = mysql.createConnection({
     host: "localhost",
@@ -225,11 +226,9 @@ router.post('/set-position-tag', async function(req, res, next){
     }
 });
 
-//Envía correo electrónico
 router.post('/envio-email', async function(req, res){
     try {
-        console.log(req.body)
-        configmensaje(req.body);
+        configmensaje(req.body)
         res.send({status: 1, data: 'ok'});
     } catch (error) {
         //error de conexión
