@@ -236,4 +236,48 @@ router.post('/envio-email', async function(req, res){
     }
 })
 
+//Verifica el usuario con el código de confirmación recibido en el mail para restablecer contraseña
+router.put('/verificate-code', async function(req, res, next){
+    try{
+        let {email, codeEmail} = req.body;
+
+        const checkCode = `SELECT * FROM users WHERE email = ? AND codeEmail = ?`;
+        con.query(checkCode, [email, codeEmail], (err, result, fields) => {
+            if (err) {
+                //error de conexion o para agregar el usuario
+                res.send({status: 0, data: err});
+            } else {
+                //EXITO!
+                if(result.length){
+                    res.send({status: 1, data: 'ok'});
+                } else{
+                    res.send({status: 1, data: 'nocode'});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+});
+
+//Actualiza la contraseña del usuario
+router.put('/restore-password', async function(req, res, next){
+    try {
+        let {email, password} = req.body;
+
+        const hashed_password = md5(password.toString())
+        const sql = `UPDATE users SET password = ? WHERE email = ?`;
+        con.query(sql, [hashed_password, email], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: 'ok'});
+            }
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+});
+
 module.exports = router;
