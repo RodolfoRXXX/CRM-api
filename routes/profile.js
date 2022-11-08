@@ -484,10 +484,10 @@ router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
 router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
     try {
         let {id} = req.body;
-        let total = 0;
-        let link = 0;
-        let nolink = 0;
-        let alert = 0;
+        let creados = [];
+        let link = [];
+        let nolink = [];
+        let alert = [];
         const sql_personas = `SELECT * FROM personas WHERE id_autor = ?`;
         con.query(sql_personas, id, (err, result, field) => {
             if (err) {
@@ -495,12 +495,13 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
             } else {
                 if(result.length){
                     result.forEach(element => {
+                        creados.push(element);
                         if(element.estado == 'link'){
-                            link++;
+                            link.push(element);
                         } else if(element.estado == 'nolink'){
-                            nolink++;
+                            nolink.push(element);
                         } else{
-                            alert++;
+                            alert.push(element);
                         }
                     });
                 }
@@ -511,12 +512,13 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
                     } else {
                         if(result.length){
                             result.forEach(element => {
+                                creados.push(element);
                                 if(element.estado == 'link'){
-                                    link++;
+                                    link.push(element);
                                 } else if(element.estado == 'nolink'){
-                                    nolink++;
+                                    nolink.push(element);
                                 } else{
-                                    alert++;
+                                    alert.push(element);
                                 }
                             });
                         }
@@ -527,17 +529,18 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
                             } else {
                                 if(result.length){
                                     result.forEach(element => {
+                                        creados.push(element);
                                         if(element.estado == 'link'){
-                                            link++;
+                                            link.push(element);
                                         } else if(element.estado == 'nolink'){
-                                            nolink++;
+                                            nolink.push(element);
                                         } else{
-                                            alert++;
+                                            alert.push(element);
                                         }
                                     });
                                 }
                                 total = link + nolink + alert;
-                                res.send({status: 1, data:{total:total, link:link, nolink:nolink, alert:alert}});
+                                res.send({status: 1, data:{creados:creados, link:link, nolink:nolink, alert:alert}});
                             }
                         })
                     }
