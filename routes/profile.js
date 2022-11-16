@@ -7,40 +7,31 @@ const path = require('path');
 const cors = require('cors');
 const fs = require("fs");
 const Jimp = require("jimp");
-
-app.set('keys', keys.key);
+const connection = require('../settings/connection');
 
 const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
-const mysql   = require('mysql');
 const save_image = require('../functions/saveImage');
 
-const con = mysql.createConnection({
-    host: "localhost",
-    user:"root",
-    password:"",
-    database:"api_db"
-});
-
 //Verifica el usuario con el código de confirmación recibido en el mail
-router.put('/verificate-user', async function(req, res, next){
+router.put('/verificate-user', auth.verifyToken, async function(req, res, next){
     try{
         let {codeEmail, id} = req.body;
 
         const checkCode = `SELECT * FROM users WHERE id = ?`;
-        con.query(checkCode, [id], (err, result, fields) => {
+        connection.con.query(checkCode, [id], (err, result, fields) => {
             if (result.length) {
                 //compruebo el codeEmail con el que me llegó
                 if(result[0].codeEmail == codeEmail){
                     const sql = `UPDATE users SET active= ? WHERE id = ?`;
-                con.query(sql, [1, id], (err, info, fields) => {
+                    connection.con.query(sql, [1, id], (err, info, fields) => {
                     if (err) {
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
                         //EXITO!
                         result[0].active = 1;
-                        let token = jwt.sign({data: result}, 'secret')
+                        let token = jwt.sign({data: result}, keys.key)
                         res.send({status: 1, data: result, token: token});
                     }
                 })
@@ -58,20 +49,21 @@ router.put('/verificate-user', async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Actualiza la contraseña del usuario
-router.put('/update-password', async function(req, res, next){
+router.put('/update-password', auth.verifyToken, async function(req, res, next){
     try {
         let {id, password} = req.body;
 
         const hashed_password = md5(password.toString())
         const sql = `UPDATE users SET password = ? WHERE id = ?`;
-        con.query(sql, [hashed_password, id], (err, result, field) => {
+        connection.con.query(sql, [hashed_password, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
+                let token = jwt.sign({data: result}, keys.key)
                 res.send({status: 1, data: result, token: token});
             }
         })
@@ -79,19 +71,20 @@ router.put('/update-password', async function(req, res, next){
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Actualiza el correo electrónico del usuario
-router.put('/update-email', async function(req, res, next){
+router.put('/update-email', auth.verifyToken, async function(req, res, next){
     try {
         let {id, email, codeEmail, active} = req.body;
 
         const sql = `UPDATE users SET email = ?, codeEmail = ?, active = ? WHERE id = ?`;
-        con.query(sql, [email, codeEmail, active, id], (err, result, field) => {
+        connection.con.query(sql, [email, codeEmail, active, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
+                let token = jwt.sign({data: result}, keys.key)
                 res.send({status: 1, data: result, token: token});
             }
         })
@@ -99,19 +92,20 @@ router.put('/update-email', async function(req, res, next){
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Actualiza el nombre de usuario
-router.put('/update-username', async function(req, res, next){
+router.put('/update-username', auth.verifyToken, async function(req, res, next){
     try {
         let {id, nombre} = req.body;
 
         const sql = `UPDATE users SET nombre = ? WHERE id = ?`;
-        con.query(sql, [nombre, id], (err, result, field) => {
+        connection.con.query(sql, [nombre, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
+                let token = jwt.sign({data: result}, keys.key)
                 res.send({status: 1, data: result, token: token});
             }
         })
@@ -119,6 +113,7 @@ router.put('/update-username', async function(req, res, next){
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Obtiene todos los tags de un usuario
@@ -126,7 +121,7 @@ router.post('/get-all-tag', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT * FROM ${tabla} WHERE id_autor = ?`;
-        con.query(sql, id, (err, result, field) => {
+        connection.con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -137,6 +132,7 @@ router.post('/get-all-tag', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Obtiene el tag elegido para ver/modificar/vincular
@@ -144,7 +140,7 @@ router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
-        con.query(sql, id, (err, result, field) => {
+        connection.con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -155,6 +151,7 @@ router.post('/get-tag', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Crea un nuevo Tag
@@ -192,7 +189,7 @@ router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
         let fields = arr_fields.join();
         let values = arr_values.join();
         const sql = `INSERT INTO ${data.tabla} (${fields}) VALUES (${values})`;
-        con.query(sql, (err, result, field) => {
+        connection.con.query(sql, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -205,6 +202,7 @@ router.post('/create-tag', auth.verifyToken, async (req, res, next) => {
         console.error(error);
         res.send({status: 0, data: error});
     }
+    connection.con.end;
 });
 
 //Edita un Tag existente
@@ -238,7 +236,7 @@ router.put('/edit-tag', auth.verifyToken, async (req, res, next) => {
         } )
         let datos = arr.join();
         const sql = `UPDATE ${data.tabla} SET ${datos} WHERE id = ?`
-        con.query(sql, [data.id], (err, result, field) => {
+        connection.con.query(sql, [data.id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -250,6 +248,7 @@ router.put('/edit-tag', auth.verifyToken, async (req, res, next) => {
         console.error(error);
         res.send({status: 0, data: error});
     }
+    connection.con.end;
 });
 
 //Busca el QR vinculado de un registro
@@ -257,7 +256,7 @@ router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT * FROM ${tabla} WHERE id = ?`;
-        con.query(sql, id, (err, result, field) => {
+        connection.con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -265,7 +264,7 @@ router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
                     res.send({status: 1, data: 'nolink'});
                 } else{
                     const sql_qr = `SELECT * FROM tablaqr WHERE id = ?`;
-                    con.query(sql_qr, result[0].id_qr, (err, result, field) => {
+                    connection.con.query(sql_qr, result[0].id_qr, (err, result, field) => {
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
@@ -279,6 +278,7 @@ router.post('/get-tag-link', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Linkea un tag_qr con un tag_id
@@ -287,7 +287,7 @@ router.put('/update-tag-link', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, codigo, tabla} = req.body;
         const sql = `SELECT * FROM tablaqr WHERE codigo = ?`;
-        con.query(sql, codigo, (err, result, field) => {
+        connection.con.query(sql, codigo, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -296,7 +296,7 @@ router.put('/update-tag-link', auth.verifyToken, async (req, res, next) => {
                 } else{
                     let id_qr = result[0].id;
                     const sql_update = `UPDATE ${tabla} SET id_qr = ?, estado = ? WHERE id = ?`;
-                    con.query(sql_update, [id_qr, 'link', parseInt(id)], (err, result, field) => {
+                    connection.con.query(sql_update, [id_qr, 'link', parseInt(id)], (err, result, field) => {
                         if (err) {
                             res.send({status: 0, data: err});
                         } else {
@@ -304,7 +304,7 @@ router.put('/update-tag-link', auth.verifyToken, async (req, res, next) => {
                                 res.send({status: 0, data: 'id_qr no modificado'});
                             } else{
                                 const sql_update_qr = `UPDATE tablaqr SET tipo = ? WHERE id = ?`;
-                                con.query(sql_update_qr, [tabla, id_qr], (err, result, field) => {
+                                connection.con.query(sql_update_qr, [tabla, id_qr], (err, result, field) => {
                                     if (err) {
                                         res.send({status: 0, data: err});
                                     } else {
@@ -325,6 +325,7 @@ router.put('/update-tag-link', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Linkea un tag_qr con un tag_id
@@ -333,7 +334,7 @@ router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, codigo, tabla} = req.body;
         const sql = `SELECT * FROM tablaqr WHERE codigo = ?`;
-        con.query(sql, codigo, (err, result, field) => {
+        connection.con.query(sql, codigo, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -342,7 +343,7 @@ router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
                 } else{
                     let id_qr = result[0].id;
                     const sql_update = `UPDATE ${tabla} SET id_qr = 0, estado = 'nolink' WHERE id = ?`;
-                    con.query(sql_update, parseInt(id), (err, result, field) => {
+                    connection.con.query(sql_update, parseInt(id), (err, result, field) => {
                         if (err) {
                             res.send({status: 0, data: err});
                         } else {
@@ -350,7 +351,7 @@ router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
                                 res.send({status: 0, data: 'id_qr no eliminado'});
                             } else{
                                 const sql_update_qr = `UPDATE tablaqr SET tipo = '' WHERE id = ?`;
-                                con.query(sql_update_qr, id_qr, (err, result, field) => {
+                                connection.con.query(sql_update_qr, id_qr, (err, result, field) => {
                                     if (err) {
                                         res.send({status: 0, data: err});
                                     } else {
@@ -371,6 +372,7 @@ router.put('/update-tag-unlink', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Obtener el estado de alerta de un tag
@@ -378,7 +380,7 @@ router.post('/get-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql = `SELECT estado, obsestado, fechaestado FROM ${tabla} WHERE id = ?`;
-        con.query(sql, id, (err, result, field) => {
+        connection.con.query(sql, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -388,6 +390,7 @@ router.post('/get-tag-alert', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Crear un alerta sobre un tag
@@ -395,7 +398,7 @@ router.put('/create-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, obsestado, fechaestado, tabla} = req.body;
         const sql = `UPDATE ${tabla} SET estado = ?, obsestado = ?, fechaestado = ? WHERE id = ?`;
-        con.query(sql, ['alert', obsestado, fechaestado, id], (err, result, field) => {
+        connection.con.query(sql, ['alert', obsestado, fechaestado, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -409,6 +412,7 @@ router.put('/create-tag-alert', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Editar un alerta sobre un tag
@@ -416,7 +420,7 @@ router.put('/edit-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, obsestado, fechaestado, tabla} = req.body;
         const sql = `UPDATE ${tabla} SET obsestado = ? WHERE id = ?`;
-        con.query(sql, [obsestado, id], (err, result, field) => {
+        connection.con.query(sql, [obsestado, id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -430,6 +434,7 @@ router.put('/edit-tag-alert', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Eliminar un alerta sobre un tag
@@ -437,7 +442,7 @@ router.put('/delete-tag-alert', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tipo} = req.body;
         const sql = `UPDATE ${tipo} SET estado = ?, obsestado = '', fechaestado = '' WHERE id = ?`;
-        con.query(sql, ['link', id], (err, result, field) => {
+        connection.con.query(sql, ['link', id], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -451,6 +456,7 @@ router.put('/delete-tag-alert', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Eliminar un tag
@@ -458,7 +464,7 @@ router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, tabla} = req.body;
         const sql_data = `SELECT * FROM ${tabla} WHERE id = ?`;
-        con.query(sql_data, id, (err, result, field) => {
+        connection.con.query(sql_data, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -466,7 +472,7 @@ router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
                     fs.unlinkSync('./public/uploads/' + result[0].foto);
                 }
                 const sql = `DELETE FROM ${tabla} WHERE id = ?`;
-                con.query(sql, id, (err, result, field) => {
+                connection.con.query(sql, id, (err, result, field) => {
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
@@ -475,9 +481,10 @@ router.post('/delete-tag', auth.verifyToken, async (req, res, next) => {
                 })
             }                
         })
-        } catch (error) {
-            res.send({status: 0, error: error});
-        }
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
 });
 
 //Obtiene la suma de todos los tags para el dashboard
@@ -489,7 +496,7 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
         let nolink = [];
         let alert = [];
         const sql_personas = `SELECT * FROM personas WHERE id_autor = ?`;
-        con.query(sql_personas, id, (err, result, field) => {
+        connection.con.query(sql_personas, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -506,7 +513,7 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
                     });
                 }
                 const sql_mascotas = `SELECT * FROM mascotas WHERE id_autor = ?`;
-                con.query(sql_mascotas, id, (err, result, field) => {
+                connection.con.query(sql_mascotas, id, (err, result, field) => {
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
@@ -523,7 +530,7 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
                             });
                         }
                         const sql_vehiculos = `SELECT * FROM vehiculos WHERE id_autor = ?`;
-                        con.query(sql_vehiculos, id, (err, result, field) => {
+                        connection.con.query(sql_vehiculos, id, (err, result, field) => {
                             if (err) {
                                 res.send({status: 0, data: err});
                             } else {
@@ -551,6 +558,7 @@ router.post('/get-data-card', auth.verifyToken, async (req, res, next) => {
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Obtiene todos los tags en alerta de un usuario, pero que han sido encontrados
@@ -563,7 +571,7 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
         let array = [];
         let tag = {id:null, titulo:null, obs:null, latitud:null, longitud:null, fecha:null};
         const sql_personas = `SELECT * FROM personas WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
-        con.query(sql_personas, id, (err, result, fields) => {
+        connection.con.query(sql_personas, id, (err, result, fields) => {
             if(err){
                 res.send({status: 0, error: err});
             } else{
@@ -571,7 +579,7 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                     personas.push(...result);
                 }
                 const sql_mascotas = `SELECT * FROM mascotas WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
-                con.query(sql_mascotas, id, (err, result, fields) => {
+                connection.con.query(sql_mascotas, id, (err, result, fields) => {
                     if(err){
                         res.send({status: 0, error: err});
                     } else{
@@ -579,7 +587,7 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
                             mascotas.push(...result);
                         }
                         const sql_vehiculos = `SELECT * FROM vehiculos WHERE estado = 'alert' AND position != '' AND id_autor = ?`;
-                        con.query(sql_vehiculos, id, (err, result, fields) => {
+                        connection.con.query(sql_vehiculos, id, (err, result, fields) => {
                             if(err){
                                 res.send({status: 0, error: err});
                             } else{
@@ -630,12 +638,7 @@ router.post('/get-found-tag', auth.verifyToken, async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 })
-
-router.get('/', auth.verifyToken, async (req, res) => {
-    //Aquí puede retornar información desde la base de datos, ahora devuelve info cualquiera
-
-    res.send({status: 1, data:{username: "Rodolfo", userWebsite: "https://www.google.com", message: "Successful"}})
-});
 
 module.exports = router;

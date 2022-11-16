@@ -1,3 +1,5 @@
+//----- Key del JWT -----//
+
 module.exports = {
-    key: "algoritmo55555"
+    key: "secret"
 }

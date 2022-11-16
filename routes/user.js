@@ -5,22 +5,14 @@ const keys = require('../settings/keys');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const configmensaje = require('./configmensaje');
+const connection = require('../settings/connection');
 
 app.use(bodyParser.json());
 app.use(cors());
-app.set('keys', keys.key);
 
 const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
-const mysql   = require('mysql');
 const { restart } = require('nodemon');
-
-const con = mysql.createConnection({
-    host: "localhost",
-    user:"root",
-    password:"",
-    database:"api_db"
-});
 
 //Registra un usuario nuevo
 router.post('/register', async function(req, res, next){
@@ -30,18 +22,18 @@ router.post('/register', async function(req, res, next){
         const hashed_password = md5(password.toString())
 
         const checkEmail = `SELECT email FROM users WHERE email = ?`;
-        con.query(checkEmail, [email], (err, result, fields) => {
+        connection.con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
                 //exito en no encontrar usuario
                 const sql = `INSERT INTO users (email, password, nombre, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
-                con.query(sql, [email, hashed_password, nombre, codeEmail, active], (err, result, fields) => {
+                connection.con.query(sql, [email, hashed_password, nombre, codeEmail, active], (err, result, fields) => {
                     if (err) {
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
                         let user = [{email: email, password: hashed_password, nombre: nombre, id: result.insertId, codeEmail: codeEmail, active: active}]
                         //éxito al agregar el usuario
-                        let token = jwt.sign({data: user}, 'secret')
+                        let token = jwt.sign({data: user}, keys.key);
                         res.send({status: 1, data: user, token: token});
                     }
                 })
@@ -54,27 +46,27 @@ router.post('/register', async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Comprueba las credenciales de usuario y dá acceso
 router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
-
         const hashed_password = md5(password.toString())
         const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
-        con.query(sql, [email, hashed_password], (err, result, field) => {
+        connection.con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, 'secret')
+                let token = jwt.sign({data: result}, keys.key);
                 res.send({status: 1, data: result, token: token});
             }
         })
-
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Comprueba que el correo electrónico pertenezca a una cuenta y envía las credenciales
@@ -83,7 +75,7 @@ router.post('/forgot', async function(req, res, next){
         let {email} = req.body;
 
         const checkEmail = `SELECT * FROM users WHERE email = ?`;
-        con.query(checkEmail, [email], (err, result, fields) => {
+        connection.con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
                 //no encontró el email
                 res.send({status: 1, data: 'noencontrado'});
@@ -96,6 +88,7 @@ router.post('/forgot', async function(req, res, next){
         //error de conexión
         res.send({status: 0, data: error});
     }
+    connection.con.end;
 });
 
 //Recibe el código externo y verifica si existe y entrega su información para ser mostrada
@@ -104,7 +97,7 @@ router.post('/get-tag-out', async function(req, res, next){
         let {code} = req.body;
         let tipo;
         const checkQR = `SELECT * FROM tablaqr WHERE codigo = BINARY ?`;
-        con.query(checkQR, code, (err, result, fields) => {
+        connection.con.query(checkQR, code, (err, result, fields) => {
             if(err){
                 res.send({status: 0, data: err});
             } else{
@@ -120,7 +113,7 @@ router.post('/get-tag-out', async function(req, res, next){
                         //qr utilizado y devuelve valores
                         tipo = result[0].tipo;
                         const checkTag = `SELECT * FROM ${result[0].tipo} WHERE id_qr = ?`;
-                        con.query(checkTag, result[0].id, (err, result, fields) => {
+                        connection.con.query(checkTag, result[0].id, (err, result, fields) => {
                             if(err){
                                 res.send({status: 0, data: err});
                             } else{
@@ -142,6 +135,7 @@ router.post('/get-tag-out', async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Buscar el email de un id_autor
@@ -149,7 +143,7 @@ router.post('/get-email', async function(req, res, next){
     try {
         let {_id_autor} = req.body;
         const sql = `SELECT email FROM users WHERE id = ?`
-        con.query(sql, _id_autor, (err, result, field) => {
+        connection.con.query(sql, _id_autor, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -159,6 +153,7 @@ router.post('/get-email', async function(req, res, next){
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Obtiene todos los tags en alerta
@@ -168,7 +163,7 @@ router.get('/get-lost-tag', async function(req, res, next){
         let mascotas = [];
         let vehiculos = [];
         const sql_personas = `SELECT * FROM personas WHERE estado = 'alert'`;
-        con.query(sql_personas, (err, result, fields) => {
+        connection.con.query(sql_personas, (err, result, fields) => {
             if(err){
                 res.send({status: 0, error: err});
             } else{
@@ -176,7 +171,7 @@ router.get('/get-lost-tag', async function(req, res, next){
                     personas.push(...result);
                 }
                 const sql_mascotas = `SELECT * FROM mascotas WHERE estado = 'alert'`;
-                con.query(sql_mascotas, (err, result, fields) => {
+                connection.con.query(sql_mascotas, (err, result, fields) => {
                     if(err){
                         res.send({status: 0, error: err});
                     } else{
@@ -184,7 +179,7 @@ router.get('/get-lost-tag', async function(req, res, next){
                             mascotas.push(...result);
                         }
                         const sql_vehiculos = `SELECT * FROM vehiculos WHERE estado = 'alert'`;
-                        con.query(sql_vehiculos, (err, result, fields) => {
+                        connection.con.query(sql_vehiculos, (err, result, fields) => {
                             if(err){
                                 res.send({status: 0, error: err});
                             } else{
@@ -202,6 +197,7 @@ router.get('/get-lost-tag', async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 })
 
 //Setea la posición GPS del tag encontrado
@@ -209,7 +205,7 @@ router.post('/set-position-tag', async function(req, res, next){
     try{
         let {tipo, id_user, data} = req.body;
         const sqlPosition = `UPDATE ${tipo} SET position = ? WHERE id = ?`;
-        con.query(sqlPosition, [data, id_user], (err, result, fields) => {
+        connection.con.query(sqlPosition, [data, id_user], (err, result, fields) => {
             if(err){
                 res.send({status: 0, data: err});
             } else{
@@ -224,6 +220,7 @@ router.post('/set-position-tag', async function(req, res, next){
         //error de conexión
         res.send({status: 0, data: error});
     }
+    connection.con.end;
 });
 
 router.post('/envio-email', async function(req, res){
@@ -234,6 +231,7 @@ router.post('/envio-email', async function(req, res){
         //error de conexión
         res.send({status: 0, data: error});
     }
+    connection.con.end;
 })
 
 //Verifica el usuario con el código de confirmación recibido en el mail para restablecer contraseña
@@ -242,7 +240,7 @@ router.put('/verificate-code', async function(req, res, next){
         let {email, codeEmail} = req.body;
 
         const checkCode = `SELECT * FROM users WHERE email = ? AND codeEmail = ?`;
-        con.query(checkCode, [email, codeEmail], (err, result, fields) => {
+        connection.con.query(checkCode, [email, codeEmail], (err, result, fields) => {
             if (err) {
                 //error de conexion o para agregar el usuario
                 res.send({status: 0, data: err});
@@ -259,6 +257,7 @@ router.put('/verificate-code', async function(req, res, next){
         //error de conexión
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 //Actualiza la contraseña del usuario
@@ -268,7 +267,7 @@ router.put('/restore-password', async function(req, res, next){
 
         const hashed_password = md5(password.toString())
         const sql = `UPDATE users SET password = ? WHERE email = ?`;
-        con.query(sql, [hashed_password, email], (err, result, field) => {
+        connection.con.query(sql, [hashed_password, email], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -278,6 +277,7 @@ router.put('/restore-password', async function(req, res, next){
     } catch (error) {
         res.send({status: 0, error: error});
     }
+    connection.con.end;
 });
 
 module.exports = router;
