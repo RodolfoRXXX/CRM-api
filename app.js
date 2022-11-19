@@ -19,14 +19,9 @@ app.use(express.json());
 
 app.use('/', indexRouter);
 
-/*app.post('/file', (req, res, next) => {
-    image = req.body.data;
-    let base64Image = image.split(';base64,').pop();
-    fs.writeFile('uploads/image.png', base64Image, {encoding: 'base64'}, () => {
-        
-    });
+app.get('/prueba', (req, res, next) => {
     res.send('Exito');
-}); */
+});
 
 //Esto es un cambio para que se guarde en la rama "secondary"
 
