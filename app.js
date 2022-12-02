@@ -25,6 +25,11 @@ app.use('/', indexRouter);
 app.get('/prueba', (req, res, next) => {
     res.send('Exito');
 });
+<<<<<<< HEAD
+=======
+
+//Esto es un cambio para que se guarde en la rama "secondary"
+>>>>>>> 1ebc2edb41f39b59ca7a034cfbe559e7f79db043
 
 //Crea la conexión con express directo
 /*
@@ -34,6 +39,7 @@ app.listen(app.get('port'), (err) => {
     } else{
         console.log('Escuchando en el puerto 4000');
     }
+<<<<<<< HEAD
 
 }) */
 
@@ -84,3 +90,7 @@ app.use('/', indexRouter);
 app.get('/prueba', (req, res) => {
     res.send('Exito');
 });
+=======
+    
+})
+>>>>>>> 1ebc2edb41f39b59ca7a034cfbe559e7f79db043
