@@ -111,6 +111,24 @@ module.exports = (formulario) => {
                                     </div>
                                 </div>
                             `;
+    
+    let plantilla_message = `
+                                <div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
+                                    <div style="padding: 10px;">
+                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 18px; line-height: 20px; margin: auto; ">
+                                            ${formulario.data.form.nombre} dice: 
+                                        </p>
+                                    </div>
+                                    <div style="text-align: center; padding: 10px;">
+                                        <h4 style="font-family: Verdana, Arial;  margin: auto; text-align: center; background: #EEEEEE; padding: 10px;border-radius: 10px;" >${formulario.data.form.message}</h4>
+                                    </div>
+                                    <div style="padding: 12px 10px; ">
+                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
+                                            Mi correo es: ${formulario.data.form.email}
+                                        </p>
+                                    </div>
+                                </div>
+                            `;
 
     switch (formulario.tipo) {
         case 'register':
@@ -136,6 +154,10 @@ module.exports = (formulario) => {
         case 'change_user':
             title = 'Actualización de tu cuenta';
             cuerpo = plantilla_change_user;
+            break;
+        case 'message':
+            title = 'Mensaje de usuario';
+            cuerpo = plantilla_message;
             break;
     }
 

@@ -1,21 +1,23 @@
 const mysql   = require('mysql');
 
 module.exports = {
+
+//datos de conexión en local
+    /*
     con : mysql.createConnection({
         host: "localhost",
-        user:"rodolfo",
-        password:"X+92Qk3yJcBu",
+        user:"root",
+        password:"",
         database:"api_db"
     })
-<<<<<<< HEAD
+    */
 
-    /*con : mysql.createConnection({
-        host: "localhost",
+//datos de conexión en cloud
+    
+    con : mysql.createConnection({
+        host: "127.0.0.1",
         user:"rodolfo",
-        password:"X+92Qk3yJcBu",
+        password:"12345678",
         database:"api_db"
-    })*/
+    })
 }
-=======
-}
->>>>>>> 1ebc2edb41f39b59ca7a034cfbe559e7f79db043
