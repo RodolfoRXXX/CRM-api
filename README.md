@@ -1,2 +1,2 @@
 # tickets-API
-API de la apicación de tickets
+API de la aplicación de tickets
