@@ -6,6 +6,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const configmensaje = require('./configmensaje');
 const connection = require('../settings/connection');
+const nodemailer = require('nodemailer');
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -17,21 +18,21 @@ const { restart } = require('nodemon');
 //Registra un usuario nuevo
 router.post('/register', async function(req, res, next){
     try{
-        let {email, password, nombre, codeEmail, active} = req.body;
+        let {name, email, password, role, thumbnail, id_enterprise, activation_code, state} = req.body;
 
         const hashed_password = md5(password.toString())
 
         const checkEmail = `SELECT email FROM users WHERE email = ?`;
         connection.con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
-                //exito en no encontrar usuario
-                const sql = `INSERT INTO users (email, password, nombre, codeEmail, active) VALUES (?, ?, ?, ?, ?)`;
-                connection.con.query(sql, [email, hashed_password, nombre, codeEmail, active], (err, result, fields) => {
+                //éxito en no encontrar usuario registrado
+                const sql = `INSERT INTO users (name, email, password, role, thumbnail, id_enterprise, activation_code, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                connection.con.query(sql, [name, email, hashed_password, role, thumbnail, id_enterprise, activation_code, state], (err, result, fields) => {
                     if (err) {
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
-                        let user = [{email: email, password: hashed_password, nombre: nombre, id: result.insertId, codeEmail: codeEmail, active: active}]
+                        let user = [{id: result.insertId, name: name, email: email, password: hashed_password, role: role, thumbnail: thumbnail, id_enterprise: id_enterprise, activation_code: activation_code, state: state}]
                         //éxito al agregar el usuario
                         let token = jwt.sign({data: user}, keys.key);
                         res.send({status: 1, data: user, token: token});
@@ -59,8 +60,12 @@ router.post('/login', async function(req, res, next){
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let token = jwt.sign({data: result}, keys.key);
-                res.send({status: 1, data: result, token: token});
+                if(result.length){
+                    let token = jwt.sign({data: result}, keys.key);
+                    res.send({status: 1, data: result, token: token});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
             }
         })
     } catch (error) {
@@ -69,19 +74,46 @@ router.post('/login', async function(req, res, next){
     connection.con.end;
 });
 
-//Comprueba que el correo electrónico pertenezca a una cuenta y envía las credenciales
-router.post('/forgot', async function(req, res, next){
+//Comprueba las credenciales de usuario y dá acceso
+router.post('/recharge', async function(req, res, next){
+    try {
+        let {email, password} = req.body;
+        const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
+        connection.con.query(sql, [email, password], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    let token = jwt.sign({data: result}, keys.key);
+                    res.send({status: 1, data: result, token: token});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Verifica que el correo electrónico pertenezca a una cuenta y devuelve su información
+router.post('/verificate-email', async function(req, res, next){
     try{
         let {email} = req.body;
 
         const checkEmail = `SELECT * FROM users WHERE email = ?`;
-        connection.con.query(checkEmail, [email], (err, result, fields) => {
-            if (!result.length) {
-                //no encontró el email
-                res.send({status: 1, data: 'noencontrado'});
-            } else{
-                //encontró el email
-                res.send({status: 1, data: result});
+        connection.con.query(checkEmail, email, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if (result.length) {
+                    //Se encontró el correo electrónico
+                    res.send({status: 1, data: result});
+                } else{
+                    //No encontró el correo electrónico
+                    res.send({status: 1, data: ''});
+                }
             }
         });
     } catch(error){
@@ -91,45 +123,53 @@ router.post('/forgot', async function(req, res, next){
     connection.con.end;
 });
 
-//Recibe el código externo y verifica si existe y entrega su información para ser mostrada
-router.post('/get-tag-out', async function(req, res, next){
+//Activa la cuenta bloqueada por código de activación
+router.post('/verificate-code', async function(req, res, next){
     try{
-        let {code} = req.body;
-        let tipo;
-        const checkQR = `SELECT * FROM tablaqr WHERE codigo = BINARY ?`;
-        connection.con.query(checkQR, code, (err, result, fields) => {
+        let {email, activation_code} = req.body;
+
+        const checkCode = `SELECT * FROM users WHERE email = ? AND activation_code = ?`;
+        connection.con.query(checkCode, [email, activation_code], (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    const activate = `UPDATE users SET state = 1 WHERE id = ?`;
+                    connection.con.query(activate, result[0].id, (err, result, fields) => {
+                        if (err) {
+                            res.send({status: 0, data: err});
+                        } else{
+                            res.send({status: 1, data: result});
+                        }
+                    });
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve el listado de empresas de la tabla Enterprises
+router.get('/get-enterprise', async function(req, res, next){
+    try{
+        const getEnterprise = `SELECT * FROM enterprise`;
+        connection.con.query(getEnterprise, (err, result, fields) => {
             if(err){
                 res.send({status: 0, data: err});
             } else{
-                if (!result.length) {
-                    //no encontró el qr
-                    res.send({status: 0, data: 'noqr'});
+                if (result.length) {
+                    //Devuelve el listado
+                    res.send({status: 1, data: result});
                 } else{
-                    //encontró el qr, ahora debe verificar si está utilizado
-                    if(!result[0].tipo){
-                        //el qr no está utilizado
-                        res.send({status: 0, data: 'nolink'}); 
-                    } else{
-                        //qr utilizado y devuelve valores
-                        tipo = result[0].tipo;
-                        const checkTag = `SELECT * FROM ${result[0].tipo} WHERE id_qr = ?`;
-                        connection.con.query(checkTag, result[0].id, (err, result, fields) => {
-                            if(err){
-                                res.send({status: 0, data: err});
-                            } else{
-                                if (!result.length) {
-                                    //no encontró el tag asociado al qr obtenido previamente
-                                    res.send({status: 0, data: 'notag'});
-                                } else{
-                                    //Encontró el tag asociado al qr y lo devuelve
-                                    res.send({status: 1, data: result, tipo: tipo});
-                                }
-                            }    
-                        })
-                    }
+                    //No encontró el listado
+                    res.send({status: 1, data: ''});
                 }
             }
-            
         });
     } catch(error){
         //error de conexión
@@ -223,10 +263,44 @@ router.post('/set-position-tag', async function(req, res, next){
     connection.con.end;
 });
 
+//Envio de email
 router.post('/envio-email', async function(req, res){
     try {
-        configmensaje(req.body)
-        res.send({status: 1, data: 'ok'});
+        configmensaje.email_body.to = req.body.email;
+        configmensaje.data = req.body.data;
+        switch (req.body.tipo) {
+            case 'register':
+                configmensaje.email_body.subject = 'Bienvenido a - Bamboo! -';
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_register.pr1 + configmensaje.data + configmensaje.plantilla_register.pr2 + configmensaje.body.html_final;
+                break;
+            case 'code':
+                configmensaje.email_body.subject = 'Código de verificación';
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_code.pc1 + configmensaje.data + configmensaje.plantilla_code.pc2 + configmensaje.body.html_final;
+                break;
+            case 'change_pass':
+                configmensaje.email_body.subject = 'Actualización de tu cuenta';
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_change_pass + configmensaje.body.html_final;
+                break;
+            case 'change_mail':
+                configmensaje.email_body.subject = 'Actualización de tu cuenta';
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_change_mail + configmensaje.body.html_final;
+                break;
+            case 'change_user':
+                configmensaje.email_body.subject = 'Actualización de tu cuenta';
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_change_user + configmensaje.body.html_final;
+                break;
+            /*case 'message':
+                configmensaje.email_body.subject = 'Mensaje de usuario';
+                configmensaje.title = 'Mensaje de usuario';
+                configmensaje.body = configmensaje.plantilla_message;
+                break;*/
+        }
+        let transport = nodemailer.createTransport(configmensaje.jConfig);
+
+        transport.sendMail(configmensaje.email_body, function (error, info) {
+            (error)?res.send({status: 1, data: 'nok'}):res.send({status: 1, data: 'ok'});
+            transport.close();
+        });
     } catch (error) {
         //error de conexión
         res.send({status: 0, data: error});
@@ -234,47 +308,22 @@ router.post('/envio-email', async function(req, res){
     connection.con.end;
 })
 
-//Verifica el usuario con el código de confirmación recibido en el mail para restablecer contraseña
-router.put('/verificate-code', async function(req, res, next){
-    try{
-        let {email, codeEmail} = req.body;
-
-        const checkCode = `SELECT * FROM users WHERE email = ? AND codeEmail = ?`;
-        connection.con.query(checkCode, [email, codeEmail], (err, result, fields) => {
-            if (err) {
-                //error de conexion o para agregar el usuario
-                res.send({status: 0, data: err});
-            } else {
-                //EXITO!
-                if(result.length){
-                    res.send({status: 1, data: 'ok'});
-                } else{
-                    res.send({status: 1, data: 'nocode'});
-                }
-            }
-        });
-    } catch(error){
-        //error de conexión
-        res.send({status: 0, error: error});
-    }
-    connection.con.end;
-});
-
 //Actualiza la contraseña del usuario
 router.put('/restore-password', async function(req, res, next){
     try {
-        let {email, password} = req.body;
+        let {email, id, password} = req.body;
 
         const hashed_password = md5(password.toString())
-        const sql = `UPDATE users SET password = ? WHERE email = ?`;
-        connection.con.query(sql, [hashed_password, email], (err, result, field) => {
+        const sql = `UPDATE users SET password = ? WHERE id = ?`;
+        connection.con.query(sql, [hashed_password, id, email], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                res.send({status: 1, data: 'ok'});
+                res.send({status: 1, data: result});
             }
         })
     } catch (error) {
+        console.log(error)
         res.send({status: 0, error: error});
     }
     connection.con.end;

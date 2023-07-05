@@ -13,36 +13,28 @@ const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
 const save_image = require('../functions/saveImage');
 
-//Verifica el usuario con el código de confirmación recibido en el mail
-router.put('/verificate-user', auth.verifyToken, async function(req, res, next){
+//Desbloquea la cuenta del usuario cundo se ingresa el código de activación asignado a dicha cuenta
+router.post('/verificate-user', async function(req, res, next){
     try{
-        let {codeEmail, id} = req.body;
+        let {email, activation_code} = req.body;
 
-        const checkCode = `SELECT * FROM users WHERE id = ?`;
-        connection.con.query(checkCode, [id], (err, result, fields) => {
-            if (result.length) {
-                //compruebo el codeEmail con el que me llegó
-                if(result[0].codeEmail == codeEmail){
-                    const sql = `UPDATE users SET active= ? WHERE id = ?`;
-                    connection.con.query(sql, [1, id], (err, info, fields) => {
-                    if (err) {
-                        //error de conexion o para agregar el usuario
-                        res.send({status: 0, data: err});
-                    } else {
-                        //EXITO!
-                        result[0].active = 1;
-                        let token = jwt.sign({data: result}, keys.key)
-                        res.send({status: 1, data: result, token: token});
-                    }
-                })
+        const checkCode = `SELECT * FROM users WHERE email = ? AND activation_code = ?`;
+        connection.con.query(checkCode, [email, activation_code], (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    const activate = `UPDATE users SET state = 1 WHERE id = ?`;
+                    connection.con.query(activate, result[0].id, (err, result, fields) => {
+                        if (err) {
+                            res.send({status: 0, data: err});
+                        } else{
+                            res.send({status: 1, data: result});
+                        }
+                    });
                 } else{
-                    //codeEmail incorrecto
-                    res.send({status: 1, data: 'error'});
+                    res.send({status: 1, data: ''});
                 }
-                
-            } else{
-                //error porque no existe usuario
-                res.send({status: 1, data: 'error'});
             }
         });
     } catch(error){

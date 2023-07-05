@@ -26,7 +26,7 @@ app.use(express.json());
 const server = http.createServer(app);
 
 server.listen(port,hostname, () => {
-    console.log(`Servidor corriendo en http://${hostname}`);
+    console.log(`Servidor corriendo en http://${hostname} y puerto ${port}`);
 });
 
 app.use('/', indexRouter);
