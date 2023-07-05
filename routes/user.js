@@ -20,8 +20,19 @@ router.post('/register', async function(req, res, next){
     try{
         let {name, email, password, role, thumbnail, id_enterprise, activation_code, state} = req.body;
 
-        const hashed_password = md5(password.toString())
+        let name_enterprise;
+        const sql_e = `SELECT * FROM enterprise WHERE id = ?;`
+        connection.con.query(sql_e, id_enterprise, (err, result, fields) => {
+            if (err) {
+                //error para encontrar la empresa
+                res.send({status: 0, data: err});
+            } else {
+                //Empresa encontrada y guardada en una variable temporal
+                name_enterprise = result[0].name
+            }
+        })
 
+        const hashed_password = md5(password.toString())
         const checkEmail = `SELECT email FROM users WHERE email = ?`;
         connection.con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
@@ -32,7 +43,7 @@ router.post('/register', async function(req, res, next){
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
-                        let user = [{id: result.insertId, name: name, email: email, password: hashed_password, role: role, thumbnail: thumbnail, id_enterprise: id_enterprise, activation_code: activation_code, state: state}]
+                        let user = [{id: result.insertId, name: name, email: email, password: hashed_password, role: role, thumbnail: thumbnail, enterprise: name_enterprise, activation_code: activation_code, state: state}]
                         //éxito al agregar el usuario
                         let token = jwt.sign({data: user}, keys.key);
                         res.send({status: 1, data: user, token: token});
@@ -55,7 +66,7 @@ router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
         const hashed_password = md5(password.toString())
-        const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
+        const sql = `SELECT users.id, users.name, email, password, role, thumbnail, enterprise.name AS enterprise, activation_code, state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
         connection.con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -78,7 +89,7 @@ router.post('/login', async function(req, res, next){
 router.post('/recharge', async function(req, res, next){
     try {
         let {email, password} = req.body;
-        const sql = `SELECT * FROM users WHERE email = ? AND password = ?`
+        const sql = `SELECT users.id, users.name, email, password, role, thumbnail, enterprise.name AS enterprise, activation_code, state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
         connection.con.query(sql, [email, password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -174,91 +185,6 @@ router.get('/get-enterprise', async function(req, res, next){
     } catch(error){
         //error de conexión
         res.send({status: 0, error: error});
-    }
-    connection.con.end;
-});
-
-//Buscar el email de un id_autor
-router.post('/get-email', async function(req, res, next){
-    try {
-        let {_id_autor} = req.body;
-        const sql = `SELECT email FROM users WHERE id = ?`
-        connection.con.query(sql, _id_autor, (err, result, field) => {
-            if (err) {
-                res.send({status: 0, data: err});
-            } else {
-                res.send({status: 1, data: result});
-            }
-        })
-    } catch (error) {
-        res.send({status: 0, error: error});
-    }
-    connection.con.end;
-});
-
-//Obtiene todos los tags en alerta
-router.get('/get-lost-tag', async function(req, res, next){
-    try{
-        let personas = [];
-        let mascotas = [];
-        let vehiculos = [];
-        const sql_personas = `SELECT * FROM personas WHERE estado = 'alert'`;
-        connection.con.query(sql_personas, (err, result, fields) => {
-            if(err){
-                res.send({status: 0, error: err});
-            } else{
-                if(result.length){
-                    personas.push(...result);
-                }
-                const sql_mascotas = `SELECT * FROM mascotas WHERE estado = 'alert'`;
-                connection.con.query(sql_mascotas, (err, result, fields) => {
-                    if(err){
-                        res.send({status: 0, error: err});
-                    } else{
-                        if(result.length){
-                            mascotas.push(...result);
-                        }
-                        const sql_vehiculos = `SELECT * FROM vehiculos WHERE estado = 'alert'`;
-                        connection.con.query(sql_vehiculos, (err, result, fields) => {
-                            if(err){
-                                res.send({status: 0, error: err});
-                            } else{
-                                if(result.length){
-                                    vehiculos.push(...result);
-                                }
-                                res.send({status: 1, data: {personas:personas, mascotas:mascotas, vehiculos:vehiculos}});
-                            }
-                        });
-                    }
-                });
-            }
-        });
-    } catch(error){
-        //error de conexión
-        res.send({status: 0, error: error});
-    }
-    connection.con.end;
-})
-
-//Setea la posición GPS del tag encontrado
-router.post('/set-position-tag', async function(req, res, next){
-    try{
-        let {tipo, id_user, data} = req.body;
-        const sqlPosition = `UPDATE ${tipo} SET position = ? WHERE id = ?`;
-        connection.con.query(sqlPosition, [data, id_user], (err, result, fields) => {
-            if(err){
-                res.send({status: 0, data: err});
-            } else{
-                if(result.affectedRows == 0){
-                    res.send({status: 0, data: 'error'});
-                } else{
-                    res.send({status: 1, data: 'ok'});
-                }
-            }
-        });
-    } catch(error){
-        //error de conexión
-        res.send({status: 0, data: error});
     }
     connection.con.end;
 });
