@@ -209,7 +209,7 @@ router.post('/envio-email', async function(req, res){
                 break;
             case 'change_mail':
                 configmensaje.email_body.subject = 'Actualización de tu cuenta';
-                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_change_mail + configmensaje.body.html_final;
+                configmensaje.email_body.html = configmensaje.body.html_initial + configmensaje.email_body.subject + configmensaje.body.html_middle + configmensaje.plantilla_change_mail.pcm1 + configmensaje.data + configmensaje.plantilla_change_mail.pcm2 + configmensaje.body.html_final;
                 break;
             case 'change_user':
                 configmensaje.email_body.subject = 'Actualización de tu cuenta';

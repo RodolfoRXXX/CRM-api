@@ -104,28 +104,29 @@ module.exports = {
                                     </div>
                                     <div style="padding: 12px 10px; ">
                                         <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
-                                            Si no hiciste ningún cambio, ingresá a tu cuenta para solucionarlo.
+                                            Si no hiciste ningún cambio, ponete en contacto con tu administrador para solucionarlo.
                                         </p>
                                     </div>
                                 </div>
                             `,
-    plantilla_change_mail : `
-                                <div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
-                                    <div style="padding: 10px;">
-                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 18px; line-height: 20px; margin: auto; ">
-                                            Ha habido una actualización en tu cuenta
-                                        </p>
-                                    </div>
-                                    <div style="text-align: center; margin: 20px 0;">
-                                        <h4 style="font-family: Verdana, Arial;  margin: auto; text-align: center; background: #EEEEEE; padding: 10px;border-radius: 10px;" >- Cambio de correo electrónico -</h4>
-                                    </div>
-                                    <div style="padding: 12px 10px; ">
-                                        <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
-                                            Si no hiciste ningún cambio, ingresá a tu cuenta para solucionarlo.
-                                        </p>
-                                    </div>
-                                </div>
-                            `,                    
+    plantilla_change_mail : {
+        pcm1: `<div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
+        <div style="padding: 10px;">
+            <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 18px; line-height: 20px; margin: auto; ">
+                Se actualizó el correo electrónico de acceso en tu cuenta!
+            </p>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+            <h1 style="font-family: Verdana, Arial; margin: auto; background-color: #EEEEEE; padding: 10px;border-radius: 10px; word-break: break-word; " >`,
+        pcm2: `</h1>
+        </div>
+        <div style="padding: 12px 10px; ">
+            <p style="font-family: Trebuchet MS, Helvetica; display: block; text-align: center; font-size: 16px; line-height: 18px; margin: auto; ">
+                Este es tu código de verificación, ingresalo en tu cuenta para verificarla y poder acceder a todas sus funcionalidades. Si no fuiste vos, ponete en contacto con tu administrador para resolver el problema.
+            </p>
+        </div>
+    </div>`,
+    },                  
     plantilla_change_user : `
                                 <div style="width: 360px; background-color: #fff; border-radius: 10px; margin: 20px 0; box-sizing: border-box; padding: 30px; border: 0.25px solid grey;">
                                     <div style="padding: 10px;">
