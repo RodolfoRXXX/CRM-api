@@ -140,7 +140,7 @@ router.post('/update-email', auth.verifyToken, async function(req, res, next){
 });
 
 //Carga una nueva imagen de usuario
-router.post('/load-image', auth.verifyToken, async (req, res, next) => {
+router.post('/load-user-image', auth.verifyToken, async (req, res, next) => {
     try {
         let {id, enterprise, name, thumbnail, blanck} = req.body;
         let changedRows;
@@ -182,6 +182,64 @@ router.post('/load-image', auth.verifyToken, async (req, res, next) => {
         })
     } catch (error) {
         res.send({status: 0, data: error});
+    }
+    connection.con.end;
+});
+
+//Carga un nuevo logo para la empresa
+router.post('/load-logo-image', auth.verifyToken, async (req, res, next) => {
+    try {
+        let {id, enterprise, thumbnail, blanck} = req.body;
+        let changedRows;
+
+        if(thumbnail.includes(';base64,')){
+            await save_image(id, enterprise, 'logo', thumbnail, blanck)
+            .then( value => {
+                if(value == 'error') throw 'error';
+                else {
+                    thumbnail = value;
+                }
+            } )
+            .catch( error => {
+                throw error;
+            } )
+        }
+
+        if(blanck) {
+            const sql = `UPDATE enterprise SET thumbnail = ? WHERE id = ?`;
+            connection.con.query(sql, [thumbnail, id], (err, result, field) => {
+                if (err) {
+                    res.send({status: 0, data: err});
+                } else {
+                    changedRows = result.changedRows
+                    res.send({status: 1, changedRows: changedRows});
+                }
+            })
+        } else {
+            changedRows = 1
+            res.send({status: 1, changedRows: changedRows});
+        }
+    } catch (error) {
+        res.send({status: 0, data: error});
+    }
+    connection.con.end;
+});
+
+//Actualiza el correo electrónico del usuario
+router.post('/update-enterprise', auth.verifyToken, async function(req, res, next){
+    try {
+        let {id, name, cuit, address, cp, phone_1, phone_2, city, state, country } = req.body;
+
+        const sql = `UPDATE enterprise SET name = ?, address= ?, phone_1 = ?, phone_2 = ?, cp = ?, country = ?, state = ?, city = ?, cuit = ? WHERE id = ?`;
+        connection.con.query(sql, [name, address, phone_1, phone_2, cp, country, state, city, cuit, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result})
+            }
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
     }
     connection.con.end;
 });

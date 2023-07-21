@@ -166,7 +166,7 @@ router.post('/verificate-code', async function(req, res, next){
 });
 
 //Devuelve el listado de empresas de la tabla Enterprises
-router.get('/get-enterprise', async function(req, res, next){
+router.get('/get-enterprises', async function(req, res, next){
     try{
         const getEnterprise = `SELECT * FROM enterprise`;
         connection.con.query(getEnterprise, (err, result, fields) => {
