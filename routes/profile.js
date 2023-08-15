@@ -225,7 +225,7 @@ router.post('/load-logo-image', auth.verifyToken, async (req, res, next) => {
     connection.con.end;
 });
 
-//Actualiza el correo electrónico del usuario
+//Actualiza los valores de la empresa
 router.post('/update-enterprise', auth.verifyToken, async function(req, res, next){
     try {
         let {id, name, cuit, address, cp, phone_1, phone_2, city, state, country } = req.body;
@@ -239,6 +239,105 @@ router.post('/update-enterprise', auth.verifyToken, async function(req, res, nex
             }
         })
     } catch (error) {
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Actualiza los valores de un empleado (personal)
+router.post('/update-employee-personal', auth.verifyToken, async function(req, res, next){
+    try {
+        let {id, name, email, address, date, phone, mobile } = req.body;
+
+        const sql = `UPDATE employee SET name = ?, email = ?, address= ?, date = ?, phone = ?, mobile = ? WHERE id = ?`;
+        connection.con.query(sql, [name, email, address, date, phone, mobile, id], (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                res.send({status: 1, data: result})
+            }
+        })
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Actualiza los valores de un empleado (laboral)
+router.post('/update-employee-work', auth.verifyToken, async function(req, res, next){
+    try {
+        let {id, work_hour, name_er, phone_er } = req.body;
+
+        if(work_hour){
+            work_hour = JSON.stringify(work_hour)
+            const sql = `UPDATE employee SET name_er = ?, phone_er = ?, working_hours = ? WHERE id = ?`;
+            connection.con.query(sql, [name_er, phone_er, work_hour, id], (err, result, field) => {
+                if (err) {
+                    res.send({status: 0, data: err});
+                } else {
+                    res.send({status: 1, data: result})
+                }
+            })
+        } else {
+            const sql = `UPDATE employee SET name_er = ?, phone_er = ? WHERE id = ?`;
+            connection.con.query(sql, [name_er, phone_er, id], (err, result, field) => {
+                if (err) {
+                    res.send({status: 0, data: err});
+                } else {
+                    res.send({status: 1, data: result})
+                }
+            })
+        }
+    } catch (error) {
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+
+/* ----------------------- GET --------------------------*/
+
+//Devuelve una empresa del listado
+router.post('/get-enterprise', auth.verifyToken, async function(req, res, next){
+    try{
+        let {name} = req.body;
+        const sql = `SELECT * FROM enterprise WHERE name = ?`;
+        connection.con.query(sql, name, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve un empleado del listado
+router.post('/get-employee', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id} = req.body;
+        const sql = `SELECT * FROM employee WHERE id_user = ?`;
+        connection.con.query(sql, id, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
         res.send({status: 0, error: error});
     }
     connection.con.end;

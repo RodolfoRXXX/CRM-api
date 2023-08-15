@@ -66,7 +66,7 @@ router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
         const hashed_password = md5(password.toString())
-        const sql = `SELECT users.id, users.name, email, password, role, thumbnail, enterprise.name AS enterprise, activation_code, state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
+        const sql = `SELECT users.id, users.name, users.email, users.password, users.role, users.thumbnail, enterprise.name AS enterprise, users.activation_code, users.state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
         connection.con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
