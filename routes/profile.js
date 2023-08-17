@@ -13,6 +13,9 @@ const md5     = require('md5');
 const jwt     = require('jsonwebtoken');
 const save_image = require('../functions/saveImage');
 
+
+/* ----------------------- POST --------------------------*/
+
 //Desbloquea la cuenta del usuario cundo se ingresa el código de activación asignado a dicha cuenta
 router.post('/verificate-user', auth.verifyToken, async function(req, res, next){
     try{
@@ -300,9 +303,9 @@ router.post('/update-employee-work', auth.verifyToken, async function(req, res, 
 //Devuelve una empresa del listado
 router.post('/get-enterprise', auth.verifyToken, async function(req, res, next){
     try{
-        let {name} = req.body;
-        const sql = `SELECT * FROM enterprise WHERE name = ?`;
-        connection.con.query(sql, name, (err, result, fields) => {
+        let {id} = req.body;
+        const sql = `SELECT * FROM enterprise WHERE id = ?`;
+        connection.con.query(sql, id, (err, result, fields) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
@@ -326,6 +329,52 @@ router.post('/get-employee', auth.verifyToken, async function(req, res, next){
         let {id} = req.body;
         const sql = `SELECT * FROM employee WHERE id_user = ?`;
         connection.con.query(sql, id, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve el número total de facturas por id para paginador
+router.post('/get-count-bills', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id} = req.body;
+        const sql = `SELECT COUNT(*) as total FROM bills WHERE id_enterprise = ?`;
+        connection.con.query(sql, id, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve una lista de facturas de la empresa en cuestión
+router.post('/get-bills', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id, page, size} = req.body;
+        const sql = `SELECT * FROM bills WHERE id_enterprise = ? LIMIT ? OFFSET ?`;
+        connection.con.query(sql, [id, size, size*page], (err, result, fields) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
