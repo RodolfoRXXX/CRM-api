@@ -18,7 +18,7 @@ const { restart } = require('nodemon');
 //Registra un usuario nuevo
 router.post('/register', async function(req, res, next){
     try{
-        let {name, email, password, role, thumbnail, id_enterprise, activation_code, state} = req.body;
+        let {name, email, password, thumbnail, id_enterprise, activation_code, state} = req.body;
 
         let name_enterprise;
         const sql_e = `SELECT * FROM enterprise WHERE id = ?;`
@@ -37,13 +37,13 @@ router.post('/register', async function(req, res, next){
         connection.con.query(checkEmail, [email], (err, result, fields) => {
             if (!result.length) {
                 //éxito en no encontrar usuario registrado
-                const sql = `INSERT INTO users (name, email, password, role, thumbnail, id_enterprise, activation_code, state) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-                connection.con.query(sql, [name, email, hashed_password, role, thumbnail, id_enterprise, activation_code, state], (err, result, fields) => {
+                const sql = `INSERT INTO users (name, email, password, thumbnail, id_enterprise, activation_code, state) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                connection.con.query(sql, [name, email, hashed_password, thumbnail, id_enterprise, activation_code, state], (err, result, fields) => {
                     if (err) {
                         //error de conexion o para agregar el usuario
                         res.send({status: 0, data: err});
                     } else {
-                        let user = [{id: result.insertId, name: name, email: email, password: hashed_password, role: role, thumbnail: thumbnail, id_enterprise: id_enterprise, enterprise: name_enterprise, activation_code: activation_code, state: state}]
+                        let user = [{id: result.insertId, name: name, email: email, password: hashed_password, thumbnail: thumbnail, id_enterprise: id_enterprise, enterprise: name_enterprise, activation_code: activation_code, state: state}]
                         //éxito al agregar el usuario
                         let token = jwt.sign({data: user}, keys.key);
                         res.send({status: 1, data: user, token: token});
@@ -66,7 +66,7 @@ router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
         const hashed_password = md5(password.toString())
-        const sql = `SELECT users.id, users.name, users.email, users.password, users.role, users.thumbnail, users.id_enterprise, enterprise.name AS enterprise, users.activation_code, users.state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
+        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.email = ? AND u.password = ?`
         connection.con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -89,7 +89,7 @@ router.post('/login', async function(req, res, next){
 router.post('/recharge', async function(req, res, next){
     try {
         let {email, password} = req.body;
-        const sql = `SELECT users.id, users.name, users.email, users.password, users.role, users.thumbnail, users.id_enterprise, enterprise.name AS enterprise, users.activation_code, users.state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE email = ? AND password = ?`
+        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.email = ? AND u.password = ?`
         connection.con.query(sql, [email, password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});

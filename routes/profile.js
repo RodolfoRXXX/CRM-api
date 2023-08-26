@@ -84,12 +84,12 @@ router.post('/update-username', auth.verifyToken, async function(req, res, next)
                 res.send({status: 0, data: err});
             } else {
                 changedRows = result.changedRows
-                const sql_data = `SELECT users.id, users.name, email, password, role, thumbnail, enterprise.name AS enterprise, activation_code, state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE users.id = ?`;
+                const sql_data = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.id = ?`;
                 connection.con.query(sql_data, id, (err, result, field) => {
                     if (err) {
                         res.send({status: 0, data: err});
                     } else {
-                        let user = [{id: result[0].id, name: result[0].name, email: result[0].email, password: result[0].password, role: result[0].role, thumbnail: result[0].thumbnail, enterprise: result[0].enterprise, activation_code: result[0].activation_code, state: result[0].state}]
+                        let user = [{id: result[0].id, name: result[0].name, email: result[0].email, password: result[0].password, thumbnail: result[0].thumbnail, enterprise: result[0].enterprise, activation_code: result[0].activation_code, state: result[0].state}]
                             //éxito al modificar usuario
                             let token = jwt.sign({data: user}, keys.key);
                             res.send({status: 1, data: user, token: token, changedRows: changedRows});
@@ -160,12 +160,12 @@ router.post('/load-user-image', auth.verifyToken, async (req, res, next) => {
                 throw error;
             } )
         }
-        const sql_data = `SELECT users.id, users.name, email, password, role, thumbnail, enterprise.name AS enterprise, activation_code, state FROM users INNER JOIN enterprise ON users.id_enterprise = enterprise.id WHERE users.id = ?`;
+        const sql_data = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.id = ?`;
         connection.con.query(sql_data, id, (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
-                let user = [{id: result[0].id, name: result[0].name, email: result[0].email, password: result[0].password, role: result[0].role, thumbnail: thumbnail, enterprise: result[0].enterprise, activation_code: result[0].activation_code, state: result[0].state}]
+                let user = [{id: result[0].id, name: result[0].name, email: result[0].email, password: result[0].password, thumbnail: thumbnail, enterprise: result[0].enterprise, activation_code: result[0].activation_code, state: result[0].state}]
                 let token = jwt.sign({data: user}, keys.key);
                     if(blanck) {
                         const sql = `UPDATE users SET thumbnail = ? WHERE id = ?`;
@@ -250,16 +250,27 @@ router.post('/update-enterprise', auth.verifyToken, async function(req, res, nex
 //Actualiza los valores de un empleado (personal)
 router.post('/update-employee-personal', auth.verifyToken, async function(req, res, next){
     try {
-        let {id, name, email, address, date, phone, mobile } = req.body;
+        let {id_user, name, email, address, date, phone, mobile } = req.body;
+        const _sql = `UPDATE employee SET name = ?, email = ?, address= ?, date = ?, phone = ?, mobile = ? WHERE id_user = ?`;
+        const _arr = [name, email, address, date, phone, mobile, id_user];
+        let changedRows;
 
-        const sql = `UPDATE employee SET name = ?, email = ?, address= ?, date = ?, phone = ?, mobile = ? WHERE id = ?`;
-        connection.con.query(sql, [name, email, address, date, phone, mobile, id], (err, result, field) => {
-            if (err) {
-                res.send({status: 0, data: err});
-            } else {
-                res.send({status: 1, data: result})
-            }
-        })
+            connection.con.query(_sql, _arr, (err, result, field) => {
+                if (err) {
+                    res.send({status: 0, data: err});
+                } else {
+                    changedRows = result.changedRows
+                    const sql_data = `SELECT * FROM employee WHERE id_user = ?`;
+                        connection.con.query(sql_data, id_user, (err, result, field) => {
+                            if (err) {
+                                res.send({status: 0, data: err});
+                            } else {
+                                    //éxito al modificar y recargar datos empleado
+                                    res.send({status: 1, data: result, changedRows: changedRows});
+                            }
+                        })
+                }
+            })
     } catch (error) {
         res.send({status: 0, error: error});
     }
@@ -269,28 +280,35 @@ router.post('/update-employee-personal', auth.verifyToken, async function(req, r
 //Actualiza los valores de un empleado (laboral)
 router.post('/update-employee-work', auth.verifyToken, async function(req, res, next){
     try {
-        let {id, work_hour, name_er, phone_er } = req.body;
+        let { id_user, name_er, phone_er } = req.body.data;
+        let _sql = '';
+        let _arr = [];
+        let changedRows;
 
-        if(work_hour){
-            work_hour = JSON.stringify(work_hour)
-            const sql = `UPDATE employee SET name_er = ?, phone_er = ?, working_hours = ? WHERE id = ?`;
-            connection.con.query(sql, [name_er, phone_er, work_hour, id], (err, result, field) => {
-                if (err) {
-                    res.send({status: 0, data: err});
-                } else {
-                    res.send({status: 1, data: result})
-                }
-            })
+        if(req.body.work_hour){
+            let work_hour = JSON.stringify(req.body.work_hour)
+            _sql = `UPDATE employee SET name_er = ?, phone_er = ?, working_hours = ? WHERE id_user = ?`;
+            _arr = [name_er, phone_er, work_hour, id_user];
         } else {
-            const sql = `UPDATE employee SET name_er = ?, phone_er = ? WHERE id = ?`;
-            connection.con.query(sql, [name_er, phone_er, id], (err, result, field) => {
-                if (err) {
-                    res.send({status: 0, data: err});
-                } else {
-                    res.send({status: 1, data: result})
-                }
-            })
+            _sql = `UPDATE employee SET name_er = ?, phone_er = ? WHERE id_user = ?`;
+            _arr = [name_er, phone_er, id_user];
         }
+        connection.con.query(_sql, _arr, (err, result, field) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                changedRows = result.changedRows
+                    const sql_data = `SELECT * FROM employee WHERE id_user = ?`;
+                        connection.con.query(sql_data, id_user, (err, result, field) => {
+                            if (err) {
+                                res.send({status: 0, data: err});
+                            } else {
+                                    //éxito al modificar y recargar datos empleado
+                                    res.send({status: 1, data: result, changedRows: changedRows});
+                            }
+                        })
+            }
+        })
     } catch (error) {
         res.send({status: 0, error: error});
     }
@@ -326,9 +344,9 @@ router.post('/get-enterprise', auth.verifyToken, async function(req, res, next){
 //Devuelve un empleado del listado
 router.post('/get-employee', auth.verifyToken, async function(req, res, next){
     try{
-        let {id} = req.body;
+        let {id_user} = req.body;
         const sql = `SELECT * FROM employee WHERE id_user = ?`;
-        connection.con.query(sql, id, (err, result, fields) => {
+        connection.con.query(sql, id_user, (err, result, fields) => {
             if (err) {
                 res.send({status: 0, data: err});
             } else {
