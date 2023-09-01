@@ -341,6 +341,29 @@ router.post('/get-enterprise', auth.verifyToken, async function(req, res, next){
     connection.con.end;
 });
 
+//Devuelve una lista de usuarios de una empresa en particular
+router.post('/get-employees', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id_enterprise} = req.body;
+        const sql = `SELECT U.id, U.email, U.state AS verify, (SELECT COUNT(*) FROM employee AS E WHERE E.id_user = U.id) AS "is_employee" FROM users AS U WHERE U.id_enterprise = ?`;
+        connection.con.query(sql, id_enterprise, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
 //Devuelve un empleado del listado
 router.post('/get-employee', auth.verifyToken, async function(req, res, next){
     try{
@@ -409,5 +432,6 @@ router.post('/get-bills', auth.verifyToken, async function(req, res, next){
     }
     connection.con.end;
 });
+
 
 module.exports = router;
