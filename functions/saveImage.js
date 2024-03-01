@@ -1,12 +1,12 @@
 const fs = require("fs");
 const Jimp = require("jimp");
-//id, enterprise, name, image
+//id, image
 
 // imagen, id, id_autor, tabla
-async function save_image(id, enterprise, name, image, blanck){
+async function save_image(id, type, image, blanck){
     try {
         let base64Image = image.split(';base64,').pop();
-        let name_image = id + '-' + enterprise + '-' + name + '-thumbnail';
+        let name_image = id + '-' + type + '-thumbnail';
         name_image = name_image + '.' + (image.split(';base64,')[0]).split('/')[1]
         let route = './public/uploads/' + name_image;
 

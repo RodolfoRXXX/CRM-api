@@ -66,7 +66,9 @@ router.post('/login', async function(req, res, next){
     try {
         let {email, password} = req.body;
         const hashed_password = md5(password.toString())
-        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.email = ? AND u.password = ?`
+        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state 
+                    FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id 
+                    WHERE u.email = ? AND u.password = ?`
         connection.con.query(sql, [email, hashed_password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -89,7 +91,9 @@ router.post('/login', async function(req, res, next){
 router.post('/recharge', async function(req, res, next){
     try {
         let {email, password} = req.body;
-        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id WHERE u.email = ? AND u.password = ?`
+        const sql = `SELECT u.id, u.name, u.email, u.password, u.thumbnail, u.id_enterprise, e.name AS enterprise, u.activation_code, u.state 
+                    FROM users AS u INNER JOIN enterprise AS e ON u.id_enterprise = e.id 
+                    WHERE u.email = ? AND u.password = ?`
         connection.con.query(sql, [email, password], (err, result, field) => {
             if (err) {
                 res.send({status: 0, data: err});

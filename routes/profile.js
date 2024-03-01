@@ -145,11 +145,11 @@ router.post('/update-email', auth.verifyToken, async function(req, res, next){
 //Carga una nueva imagen de usuario
 router.post('/load-user-image', auth.verifyToken, async (req, res, next) => {
     try {
-        let {id, enterprise, name, thumbnail, blanck} = req.body;
+        let {id, thumbnail, blanck} = req.body;
         let changedRows;
 
         if(thumbnail.includes(';base64,')){
-            await save_image(id, enterprise, name, thumbnail, blanck)
+            await save_image(id, 'user', thumbnail, blanck)
             .then( value => {
                 if(value == 'error') throw 'error';
                 else {
@@ -167,20 +167,20 @@ router.post('/load-user-image', auth.verifyToken, async (req, res, next) => {
             } else {
                 let user = [{id: result[0].id, name: result[0].name, email: result[0].email, password: result[0].password, thumbnail: thumbnail, enterprise: result[0].enterprise, activation_code: result[0].activation_code, state: result[0].state}]
                 let token = jwt.sign({data: user}, keys.key);
-                    if(blanck) {
-                        const sql = `UPDATE users SET thumbnail = ? WHERE id = ?`;
-                        connection.con.query(sql, [thumbnail, id], (err, result, field) => {
-                            if (err) {
-                                res.send({status: 0, data: err});
-                            } else {
-                                changedRows = result.changedRows
-                                res.send({status: 1, data: user, token: token, changedRows: changedRows});
-                            }
-                        })
-                    } else {
-                        changedRows = 1
-                        res.send({status: 1, data: user, token: token, changedRows: changedRows});
-                    }
+                if(blanck) {
+                    const sql = `UPDATE users SET thumbnail = ? WHERE id = ?`;
+                    connection.con.query(sql, [thumbnail, id], (err, result, field) => {
+                        if (err) {
+                            res.send({status: 0, data: err});
+                        } else {
+                            changedRows = result.changedRows
+                            res.send({status: 1, data: user, token: token, changedRows: changedRows});
+                        }
+                    })
+                } else {
+                    changedRows = 1
+                    res.send({status: 1, data: user, token: token, changedRows: changedRows});
+                }
             }
         })
     } catch (error) {
@@ -192,11 +192,11 @@ router.post('/load-user-image', auth.verifyToken, async (req, res, next) => {
 //Carga un nuevo logo para la empresa
 router.post('/load-logo-image', auth.verifyToken, async (req, res, next) => {
     try {
-        let {id, enterprise, thumbnail, blanck} = req.body;
+        let {id, thumbnail, blanck} = req.body;
         let changedRows;
 
         if(thumbnail.includes(';base64,')){
-            await save_image(id, enterprise, 'logo', thumbnail, blanck)
+            await save_image(id, 'enterprise', thumbnail, blanck)
             .then( value => {
                 if(value == 'error') throw 'error';
                 else {
@@ -368,7 +368,9 @@ router.post('/get-employees', auth.verifyToken, async function(req, res, next){
 router.post('/get-employee', auth.verifyToken, async function(req, res, next){
     try{
         let {id_user} = req.body;
-        const sql = `SELECT * FROM employee WHERE id_user = ?`;
+        const sql = `SELECT e.id, e.id_user, e.id_enterprise, e.name, e.email, e.address, e.date, e.phone, e.mobile, e.working_hours, e.name_er, e.phone_er, e.state, r.name_role, r.list_of_permissions 
+                    FROM employee AS e INNER JOIN role AS r ON e.role = r.id 
+                    WHERE id_user = ?`;
         connection.con.query(sql, id_user, (err, result, fields) => {
             if (err) {
                 res.send({status: 0, data: err});
@@ -415,6 +417,58 @@ router.post('/get-bills', auth.verifyToken, async function(req, res, next){
     try{
         let {id, page, size} = req.body;
         const sql = `SELECT * FROM bills WHERE id_enterprise = ? LIMIT ? OFFSET ?`;
+        connection.con.query(sql, [id, size, size*page], (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve el número total de fusuarios por id para paginador
+router.post('/get-count-users', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id} = req.body;
+        const sql = `SELECT COUNT(*) as total FROM users WHERE id_enterprise = ?`;
+        connection.con.query(sql, id, (err, result, fields) => {
+            if (err) {
+                res.send({status: 0, data: err});
+            } else {
+                if(result.length){
+                    res.send({status: 1, data: result});
+                } else{
+                    res.send({status: 1, data: ''});
+                }
+            }
+        });
+    } catch(error){
+        //error de conexión
+        res.send({status: 0, error: error});
+    }
+    connection.con.end;
+});
+
+//Devuelve una lista de usuarios de la empresa en cuestión
+router.post('/get-users', auth.verifyToken, async function(req, res, next){
+    try{
+        let {id, page, size} = req.body;
+        const sql = `SELECT u.email, u.thumbnail, u.state AS verified_state,
+                    (SELECT e.id FROM employee AS e WHERE e.id_user = u.id) AS id_employee, 
+                    (SELECT e.name FROM employee AS e WHERE e.id_user = u.id) AS name_employee, 
+                    (SELECT r.name_role FROM employee AS e INNER JOIN role AS r ON e.role = r.id WHERE e.id_user = u.id) AS role, 
+                    (SELECT e.state FROM employee AS e WHERE e.id_user = u.id) AS state_employee 
+                    FROM users AS u 
+                    WHERE u.id_enterprise = ? LIMIT ? OFFSET ?`;
         connection.con.query(sql, [id, size, size*page], (err, result, fields) => {
             if (err) {
                 res.send({status: 0, data: err});
