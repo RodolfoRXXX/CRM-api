@@ -26,8 +26,18 @@ app.use(express.json());
 //Crea el server con http y lo vincula con express
 const server = http.createServer(app);
 
+/*
+//Esto no funciona en el cloud, solo en localhost
+
 server.listen(port,hostname, () => {
     console.log(`Servidor corriendo en http://${hostname} y puerto ${port}`);
+});
+
+*/
+
+//Aquí sirve para el cloud, con '0.0.0.0' acepta las peticiones de todas las ips
+app.listen(port, '0.0.0.0', () => {
+    console.log(`App listening on port ${port}`);
 });
 
 app.use('/', indexRouter);
